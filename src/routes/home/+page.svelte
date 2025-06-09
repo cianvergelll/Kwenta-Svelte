@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import ExpenseModal from '../../components/ExpenseModal.svelte';
+	import Chart from '../../components/Chart.svelte';
 
 	let expenses = $state([]);
 	let expense_amount = $state('');
@@ -165,6 +166,12 @@
 		}
 	}
 
+	function reloadChart() {
+		// Add your reload logic here
+		console.log('Reloading chart data...');
+		// You might want to fetch new data here and update the chartData
+	}
+
 	const inputStyle =
 		'w-[90%] py-2 border border-white rounded-lg pl-4 mb-2 text-white placeholder:text-white';
 </script>
@@ -235,8 +242,17 @@
 		></div>
 	</div>
 
-	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 shadow-xl">
-		<div class="h-[50%] w-full border"></div>
+	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300">
+		<div class="h-[50%] w-full">
+			<Chart
+				title="Expense Breakdown"
+				chartLabels={['Food', 'Transportation', 'Utilities', 'Entertainment', 'Other']}
+				chartData={[1000, 500, 800, 300, 200]}
+				dataLabel="Amount Spent"
+				chartType="bar"
+				onReload={reloadChart}
+			/>
+		</div>
 		<div class="h-[50%] w-full">
 			<div class="relative mt-3 flex h-full w-full flex-col items-center justify-center">
 				{#if isLoading && expenses.length === 0}
