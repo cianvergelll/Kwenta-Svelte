@@ -3,7 +3,6 @@
 	import type { ChartConfiguration, ChartTypeRegistry } from 'chart.js';
 	import { onMount } from 'svelte';
 
-	// Define valid chart types
 	type ValidChartType = 'bar' | 'pie' | 'doughnut' | 'line';
 
 	interface Props {
@@ -120,7 +119,7 @@
 	});
 </script>
 
-<div class="rounded-xl bg-white p-4 shadow-xl">
+<div class="rounded-xl bg-white p-4">
 	<div class="mb-4 flex items-center justify-between">
 		<h2 class="text-xl font-semibold text-green-700">{title}</h2>
 		{#if onReload}

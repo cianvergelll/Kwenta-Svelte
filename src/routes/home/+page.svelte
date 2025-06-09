@@ -242,7 +242,7 @@
 		></div>
 	</div>
 
-	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300">
+	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white">
 		<div class="h-[50%] w-full">
 			<Chart
 				title="Expense Breakdown"
@@ -253,7 +253,7 @@
 				onReload={reloadChart}
 			/>
 		</div>
-		<div class="h-[50%] w-full">
+		<div class="h-[50%] w-full bg-white">
 			<div class="relative mt-3 flex h-full w-full flex-col items-center justify-center">
 				{#if isLoading && expenses.length === 0}
 					<div class="py-8 text-center">Loading expenses...</div>
