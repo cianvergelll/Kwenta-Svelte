@@ -1,31 +1,36 @@
+// src/hooks.server.js
 import { getServerSession } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
 
 export async function handle({ event, resolve }) {
     // Get session token from cookies or Authorization header
+    const authHeader = event.request.headers.get('Authorization');
     const sessionToken = event.cookies.get('sessionToken') ||
-        event.request.headers.get('Authorization')?.split(' ')[1];
+        (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
 
     if (sessionToken) {
-        const session = getServerSession(sessionToken);
-        if (session) {
-            event.locals.user = { id: session.userId };
+        try {
+            const session = await getServerSession(sessionToken);
+            if (session) {
+                event.locals.user = { id: session.userId };
+            }
+        } catch (error) {
+            console.error('Session verification error:', error);
         }
     }
 
-    if (event.url.pathname.startsWith('/dashboard')) {
+    // Route protection
+    if (event.url.pathname.startsWith('/home') || event.url.pathname === '/home') {
         if (!event.locals.user) {
             throw redirect(303, '/login');
         }
     }
 
-    // Check if user is trying to access auth routes while logged in
     if (['/login', '/register'].includes(event.url.pathname)) {
         if (event.locals.user) {
             throw redirect(303, '/dashboard');
         }
     }
 
-    const response = await resolve(event);
-    return response;
+    return await resolve(event);
 }
