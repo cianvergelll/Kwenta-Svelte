@@ -199,15 +199,15 @@
 						id="expense-category"
 						bind:value={expense_category}
 						placeholder="Select Category"
-						class={`${inputStyle} bg-transparent text-white`}
+						class={`${inputStyle} bg-transparent`}
 						required
 					>
 						<option value="" disabled selected>Select a category</option>
-						<option value="food">Food</option>
-						<option value="transportation">Transportation</option>
-						<option value="utilities">Utilities</option>
-						<option value="entertainment">Entertainment</option>
-						<option value="other">Other</option>
+						<option value="food" class="text-black">Food</option>
+						<option value="transportation" class="text-black">Transportation</option>
+						<option value="utilities" class="text-black">Utilities</option>
+						<option value="entertainment" class="text-black">Entertainment</option>
+						<option value="other" class="text-black">Other</option>
 					</select>
 
 					<input

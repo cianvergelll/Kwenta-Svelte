@@ -33,6 +33,7 @@
 		"vite-plugin-devtools-json": "^0.1.1"
 	},
 	"dependencies": {
+		"chart.js": "^4.4.9",
 		"mysql": "^2.18.1",
 		"mysql2": "^3.14.1"
 	}

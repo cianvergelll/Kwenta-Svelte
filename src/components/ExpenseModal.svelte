@@ -8,7 +8,6 @@
 	export let closeModal;
 	export let saveExpense;
 
-	// Function to determine background class based on category
 	function getCategoryClass(category) {
 		switch (category) {
 			case 'utilities':
@@ -29,7 +28,6 @@
 
 {#if showModal}
 	<div class="fixed inset-0 z-50 flex items-center justify-center">
-		<!-- Overlay with button role and keyboard support -->
 		<button
 			class="bg-opacity-40 absolute inset-0 bg-black backdrop-blur-sm"
 			on:click={closeModal}
@@ -39,7 +37,6 @@
 			<span class="sr-only">Close modal</span>
 		</button>
 
-		<!-- Modal content with dynamic background -->
 		<div
 			class="relative w-full max-w-md rounded-lg p-6 text-white shadow-xl {getCategoryClass(
 				modalCategory
