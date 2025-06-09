@@ -267,7 +267,10 @@
 								>
 									<!-- Left: Expense details in column -->
 									<div class="flex flex-col">
-										<span class="text-base text-white">{expense.expense_category}</span>
+										<span class="text-base text-white">
+											{expense.expense_category.charAt(0).toUpperCase() +
+												expense.expense_category.slice(1)}
+										</span>
 										<span class="text-2xl font-bold text-white">₱{expense.expense_amount}</span>
 										<span class="text-sm text-white">{expense.expense_note}</span>
 									</div>
@@ -289,7 +292,7 @@
 								</li>
 							{/each}
 						</ul>
-						<h1 class="ml-10 text-xl font-bold text-green-600">
+						<h1 class="text-center text-xl font-bold text-green-600">
 							TOTAL MONEY SPENT TODAY: ₱
 							{expenses
 								.reduce((total, expense) => total + Number(expense.expense_amount), 0)

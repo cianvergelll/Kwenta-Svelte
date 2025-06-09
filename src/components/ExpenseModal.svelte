@@ -1,12 +1,30 @@
 <script>
 	export let showModal;
-	export const editingExpenses = null; // Changed to const since it's not modified in this component
+	export const editingExpenses = null;
 	export let modalCategory;
 	export let modalAmount;
 	export let modalNote;
 
 	export let closeModal;
 	export let saveExpense;
+
+	// Function to determine background class based on category
+	function getCategoryClass(category) {
+		switch (category) {
+			case 'utilities':
+				return 'bg-gradient-to-r from-blue-500 to-blue-800';
+			case 'food':
+				return 'bg-gradient-to-r from-pink-500 to-pink-800';
+			case 'transportation':
+				return 'bg-gradient-to-r from-yellow-500 to-yellow-800';
+			case 'entertainment':
+				return 'bg-gradient-to-r from-purple-500 to-purple-800';
+			case 'other':
+				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			default:
+				return 'bg-white';
+		}
+	}
 </script>
 
 {#if showModal}
@@ -21,9 +39,11 @@
 			<span class="sr-only">Close modal</span>
 		</button>
 
-		<!-- Modal content -->
+		<!-- Modal content with dynamic background -->
 		<div
-			class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+			class="relative w-full max-w-md rounded-lg p-6 text-white shadow-xl {getCategoryClass(
+				modalCategory
+			)}"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="modal-title"
@@ -32,7 +52,11 @@
 
 			<div class="mb-4">
 				<label for="category" class="mb-1 block text-sm font-medium">Category</label>
-				<select id="category" bind:value={modalCategory} class="w-full rounded border p-2">
+				<select
+					id="category"
+					bind:value={modalCategory}
+					class="w-full rounded border p-2 text-gray-800"
+				>
 					<option value="" disabled>Select a category</option>
 					<option value="food">Food</option>
 					<option value="transportation">Transportation</option>
@@ -48,7 +72,7 @@
 					id="amount"
 					type="number"
 					bind:value={modalAmount}
-					class="w-full rounded border p-2"
+					class="w-full rounded border p-2 text-gray-800"
 					placeholder="Expense amount"
 				/>
 			</div>
@@ -58,7 +82,7 @@
 				<input
 					id="note"
 					bind:value={modalNote}
-					class="w-full rounded border p-2"
+					class="w-full rounded border p-2 text-gray-800"
 					placeholder="Expense note"
 				/>
 			</div>
@@ -67,14 +91,14 @@
 				<button
 					type="button"
 					on:click={closeModal}
-					class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+					class="rounded bg-white px-4 py-2 text-gray-800 hover:bg-gray-100"
 				>
 					Cancel
 				</button>
 				<button
 					type="button"
 					on:click={saveExpense}
-					class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+					class="rounded bg-white px-4 py-2 text-gray-800 hover:bg-gray-100"
 				>
 					Save
 				</button>
