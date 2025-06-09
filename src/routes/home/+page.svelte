@@ -3,12 +3,22 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
-	let tasks = $state([]);
+	let expenses = $state([]);
 	let expense_amount = $state('');
 	let expense_category = $state('');
 	let expense_note = $state('');
 	let errorMessage = $state('');
 	let isLoading = $state(false);
+	let expensesList = $state(null);
+
+	function scrollToBottom() {
+		if (expensesList) {
+			expensesList.scrollTo({
+				top: expensesList.scrollHeight,
+				behavior: 'smooth'
+			});
+		}
+	}
 
 	onMount(async () => {
 		const token = localStorage.getItem('sessionToken');
@@ -28,7 +38,7 @@
 				return;
 			}
 
-			// await loadTasks();
+			await loadExpenses();
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
@@ -41,6 +51,29 @@
 			'Content-Type': 'application/json',
 			Authorization: `Bearer ${token}`
 		};
+	}
+
+	async function loadExpenses() {
+		isLoading = true;
+		errorMessage = '';
+		try {
+			const res = await fetch('/api/expenses', {
+				headers: await getAuthHeaders()
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to load expenses';
+				return;
+			}
+
+			expenses = await res.json();
+		} catch (error) {
+			console.error('Error loading expenses:', error);
+			errorMessage = 'Network error';
+		} finally {
+			isLoading = false;
+		}
 	}
 
 	async function addExpense() {
@@ -61,9 +94,32 @@
 			expense_amount = '';
 			expense_category = '';
 			expense_note = '';
-			await loadTasks();
+			await loadExpenses();
 		} catch (error) {
-			console.error('Error adding task:', error);
+			console.error('Error adding expenses:', error);
+			errorMessage = 'Network error';
+		}
+	}
+
+	async function deleteExpense(id) {
+		if (!confirm('Are you sure you want to delete this task?')) return;
+
+		try {
+			const res = await fetch(`/api/expenses/${id}`, {
+				// Note the URL change
+				method: 'DELETE',
+				headers: await getAuthHeaders()
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to delete expense';
+				return;
+			}
+
+			await loadExpenses();
+		} catch (error) {
+			console.error('Error deleting expense:', error);
 			errorMessage = 'Network error';
 		}
 	}
@@ -133,13 +189,53 @@
 		</div>
 
 		<div
-			class="my-auto flex h-[40%] flex-col items-center justify-center rounded-xl bg-white shadow-xl"
-		>
-			<div class="flex h-[50%] w-full items-center justify-center">
-				<p class="text-xl font-bold text-green-700">Total Expenses</p>
+			class="my-auto flex h-[40%] flex-col items-center justify-center overflow-hidden rounded-xl bg-white shadow-xl"
+		></div>
+	</div>
+
+	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 shadow-xl">
+		<div class="h-[50%] w-full border"></div>
+		<div class="h-[50%] w-full">
+			<div class="relative mt-3 flex h-full w-full flex-col items-center justify-center">
+				{#if isLoading && expenses.length === 0}
+					<div class="py-8 text-center">Loading expenses...</div>
+				{:else}
+					<div class="relative h-full w-full">
+						<ul
+							bind:this={expensesList}
+							class="my-3 flex max-h-65 w-full flex-col items-center space-y-4 overflow-y-auto pr-2"
+						>
+							{#each expenses as expense}
+								<li
+									class="flex w-[95%] items-center justify-between rounded-lg bg-gray-50 p-4 shadow"
+								>
+									<!-- Left: Expense details in column -->
+									<div class="flex flex-col">
+										<span class="text-base text-gray-700">{expense.expense_category}</span>
+										<span class="text-2xl font-bold text-green-800">{expense.expense_amount}</span>
+										<span class="text-sm text-gray-600">{expense.expense_note}</span>
+									</div>
+									<!-- Right: Buttons in row, justified end -->
+									<div class="flex flex-row justify-end space-x-2">
+										<button
+											class="rounded bg-yellow-500 px-3 py-1 text-white transition-colors hover:bg-yellow-600"
+										>
+											Edit
+										</button>
+										<button
+											onclick={deleteExpense(expense.id)}
+											class="rounded bg-red-600 px-3 py-1 text-white transition-colors hover:bg-red-700"
+										>
+											Delete
+										</button>
+									</div>
+								</li>
+							{/each}
+						</ul>
+						<h1 class="ml-10 text-xl font-bold text-green-600">TOTAL MONEY SPENT TODAY: ₱</h1>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</div>
-
-	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 shadow-xl"></div>
 </div>
