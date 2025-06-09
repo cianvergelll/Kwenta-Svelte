@@ -14,19 +14,19 @@ export async function POST({ request, cookies }) {
             });
         }
 
-        const sessionToken = createSession(rows[0].id);
+        const sessionToken = createSession(rows[0].user_id);
 
         cookies.set('sessionToken', sessionToken, {
             path: '/',
             httpOnly: true,
             sameSite: 'strict',
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 // 1 day
+            maxAge: 60 * 60 * 24
         });
 
         return new Response(JSON.stringify({
             message: 'Logged in successfully',
-            user: { id: rows[0].id, email: rows[0].email }
+            user: { id: rows[0].user_id, email: rows[0].email } // Also changed here
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }

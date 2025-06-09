@@ -33,7 +33,7 @@ export async function POST({ request, locals }) {
         const { expense_amount, expense_category, expense_note } = await request.json();
 
         await pool.query(
-            'INSERT INTO tasks (user_id, expense_amount, expense_category, expense_note) VALUES (?, ?, ?, ?)',
+            'INSERT INTO expenses (user_id, expense_amount, expense_category, expense_note) VALUES (?, ?, ?, ?)',
             [locals.user.id, expense_amount, expense_category, expense_note]
         );
 

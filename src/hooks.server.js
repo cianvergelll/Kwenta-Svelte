@@ -3,19 +3,30 @@ import { getServerSession } from '$lib/session';
 import { redirect } from '@sveltejs/kit';
 
 export async function handle({ event, resolve }) {
-    // Get session token from cookies or Authorization header
-    const authHeader = event.request.headers.get('Authorization');
-    const sessionToken = event.cookies.get('sessionToken') ||
-        (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
+
+
+    // First get the token from cookies
+    let sessionToken = event.cookies.get('sessionToken');
+
+    // Then check Authorization header if no cookie
+    if (!sessionToken) {
+        const authHeader = event.request.headers.get('Authorization');
+        if (authHeader?.startsWith('Bearer ')) {
+            sessionToken = authHeader.split(' ')[1];
+        }
+    }
 
     if (sessionToken) {
         try {
-            const session = await getServerSession(sessionToken);
+            const session = getServerSession(sessionToken);
             if (session) {
                 event.locals.user = { id: session.userId };
+                console.log('User session set:', event.locals.user);
             }
         } catch (error) {
-            console.error('Session verification error:', error);
+            console.error('Session error:', error);
+            // Clear invalid session
+            event.cookies.delete('sessionToken');
         }
     }
 
@@ -28,7 +39,7 @@ export async function handle({ event, resolve }) {
 
     if (['/login', '/register'].includes(event.url.pathname)) {
         if (event.locals.user) {
-            throw redirect(303, '/dashboard');
+            throw redirect(303, '/home');
         }
     }
 

@@ -122,7 +122,7 @@
 					<div class="mr-15 flex w-full justify-end">
 						<button
 							type="submit"
-							onclick={addExpense}
+							preventdefault
 							class="w-[40%] rounded-lg bg-white py-2 font-bold text-green-800 transition duration-300 hover:bg-green-700 hover:text-white"
 						>
 							Add Expense
