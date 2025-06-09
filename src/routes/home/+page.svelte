@@ -1,5 +1,32 @@
 <script>
 	import SideNav from '../../components/sideNav.svelte';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+
+	onMount(async () => {
+		const token = localStorage.getItem('sessionToken');
+		if (!token) {
+			goto('/login');
+			return;
+		}
+
+		try {
+			const res = await fetch('/api/auth/verify', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+
+			if (!res.ok) {
+				localStorage.removeItem('sessionToken');
+				goto('/login');
+				return;
+			}
+
+			// await loadTasks();
+		} catch (error) {
+			console.error('Session verification failed:', error);
+			goto('/login');
+		}
+	});
 
 	const inputStyle =
 		'w-[90%] py-2 border border-white rounded-lg pl-4 mb-2 text-white placeholder:text-white';
@@ -11,7 +38,7 @@
 	</div>
 
 	<div class="mx-auto flex h-[95%] w-[35%] flex-col">
-		<p class="mt-5 pl-5 text-2xl font-bold text-green-700">Good Day, {name}!<br /></p>
+		<p class="mt-5 pl-5 text-2xl font-bold text-green-700">Good Day, User!<br /></p>
 		<p class="pl-5 text-green-700">Let's start your overseeing your expenses.</p>
 		<div class="my-auto h-[40%] rounded-xl bg-gradient-to-r from-green-600 to-green-800 shadow-xl">
 			<div class="flex h-full flex-col items-center justify-center">
