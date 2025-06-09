@@ -7,21 +7,21 @@ export async function PUT({ request, params, locals }) {
     });
 
     try {
-        const { title, description } = await request.json();
+        const { expense_amount, expense_category, expense_note } = await request.json();
 
         const [result] = await pool.query(
-            'UPDATE tasks SET title = ?, description = ? WHERE id = ? AND user_id = ?',
-            [title, description, params.id, locals.user.id]
+            'UPDATE expenses SET expense_amount = ?, expense_category = ?, expense_note = ? WHERE id = ? AND user_id = ?',
+            [expense_amount, expense_category, expense_note, params.id, locals.user.id]
         );
 
         if (result.affectedRows === 0) {
-            return new Response(JSON.stringify({ error: 'Task not found or not owned by user' }), {
+            return new Response(JSON.stringify({ error: 'Expense not found or not owned by user' }), {
                 status: 404,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        return new Response(JSON.stringify({ message: 'Task updated' }), {
+        return new Response(JSON.stringify({ message: 'Expense updated' }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });

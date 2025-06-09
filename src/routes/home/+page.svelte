@@ -2,6 +2,7 @@
 	import SideNav from '../../components/sideNav.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import ExpenseModal from '../../components/ExpenseModal.svelte';
 
 	let expenses = $state([]);
 	let expense_amount = $state('');
@@ -11,12 +12,53 @@
 	let isLoading = $state(false);
 	let expensesList = $state(null);
 
-	function scrollToBottom() {
-		if (expensesList) {
-			expensesList.scrollTo({
-				top: expensesList.scrollHeight,
-				behavior: 'smooth'
+	let showModal = $state(false);
+	let editingExpenses = $state(null);
+	let modalCategory = $state('');
+	let modalAmount = $state('');
+	let modalNote = $state('');
+
+	function openEditModal(expense) {
+		editingExpenses = expense;
+		modalCategory = expense.expense_category;
+		modalAmount = expense.expense_amount;
+		modalNote = expense.expense_note;
+		showModal = true;
+	}
+
+	function closeModal() {
+		showModal = false;
+		editingExpenses = null;
+		modalAmount = '';
+		modalCategory = '';
+		modalNote = '';
+	}
+
+	async function saveExpense() {
+		if (!editingExpenses) return;
+
+		try {
+			const res = await fetch(`/api/expenses/${editingExpenses.id}`, {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					expense_amount: modalAmount,
+					expense_category: modalCategory,
+					expense_note: modalNote
+				})
 			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to update expense';
+				return;
+			}
+
+			closeModal();
+			await loadExpenses();
+		} catch (error) {
+			console.error('Error updating expense:', error);
+			errorMessage = 'Network error while updating';
 		}
 	}
 
@@ -207,23 +249,38 @@
 						>
 							{#each expenses as expense}
 								<li
-									class="flex w-[95%] items-center justify-between rounded-lg bg-gray-50 p-4 shadow"
+									class={`flex w-[95%] items-center justify-between rounded-lg p-4 shadow
+										${
+											expense.expense_category === 'utilities'
+												? 'bg-gradient-to-r from-blue-500 to-blue-800'
+												: expense.expense_category === 'food'
+													? 'bg-gradient-to-r from-pink-500 to-pink-800'
+													: expense.expense_category === 'transportation'
+														? 'bg-gradient-to-r from-yellow-500 to-yellow-800'
+														: expense.expense_category === 'entertainment'
+															? 'bg-gradient-to-r from-purple-500 to-purple-800'
+															: expense.expense_category === 'other'
+																? 'bg-gradient-to-r from-gray-400 to-gray-700'
+																: 'bg-gray-50'
+										}
+									`}
 								>
 									<!-- Left: Expense details in column -->
 									<div class="flex flex-col">
-										<span class="text-base text-gray-700">{expense.expense_category}</span>
-										<span class="text-2xl font-bold text-green-800">{expense.expense_amount}</span>
-										<span class="text-sm text-gray-600">{expense.expense_note}</span>
+										<span class="text-base text-white">{expense.expense_category}</span>
+										<span class="text-2xl font-bold text-white">{expense.expense_amount}</span>
+										<span class="text-sm text-white">{expense.expense_note}</span>
 									</div>
 									<!-- Right: Buttons in row, justified end -->
 									<div class="flex flex-row justify-end space-x-2">
 										<button
 											class="rounded bg-yellow-500 px-3 py-1 text-white transition-colors hover:bg-yellow-600"
+											onclick={() => openEditModal(expense)}
 										>
 											Edit
 										</button>
 										<button
-											onclick={deleteExpense(expense.id)}
+											onclick={() => deleteExpense(expense.id)}
 											class="rounded bg-red-600 px-3 py-1 text-white transition-colors hover:bg-red-700"
 										>
 											Delete
@@ -233,6 +290,61 @@
 							{/each}
 						</ul>
 						<h1 class="ml-10 text-xl font-bold text-green-600">TOTAL MONEY SPENT TODAY: ₱</h1>
+					</div>
+				{/if}
+
+				{#if showModal}
+					<div class="fixed inset-0 z-50 flex items-center justify-center">
+						<!-- Overlay with lower opacity, allows background to be visible but dimmed -->
+						<div class="bg-opacity-40 absolute inset-0 bg-black backdrop-blur-sm"></div>
+						<!-- Modal content -->
+						<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+							<h3 class="mb-4 text-xl font-bold">Edit Expense Added</h3>
+
+							<div class="mb-4">
+								<label for="category" class="mb-1 block text-sm font-medium">Category</label>
+								<select id="category" bind:value={modalCategory} class="w-full rounded border p-2">
+									<option value="" disabled>Select a category</option>
+									<option value="food">Food</option>
+									<option value="transportation">Transportation</option>
+									<option value="utilities">Utilities</option>
+									<option value="entertainment">Entertainment</option>
+									<option value="other">Other</option>
+								</select>
+							</div>
+							<div class="mb-4">
+								<label for="description" class="mb-1 block text-sm font-medium">Amount</label>
+								<input
+									bind:value={modalAmount}
+									class="w-full rounded border p-2"
+									placeholder="Expense amount"
+								/>
+							</div>
+
+							<div class="mb-4">
+								<label for="description" class="mb-1 block text-sm font-medium">Note</label>
+								<input
+									bind:value={modalNote}
+									class="w-full rounded border p-2"
+									placeholder="Expense note"
+								/>
+							</div>
+
+							<div class="flex justify-end space-x-2">
+								<button
+									onclick={closeModal}
+									class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+								>
+									Cancel
+								</button>
+								<button
+									onclick={saveExpense}
+									class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+								>
+									Save
+								</button>
+							</div>
+						</div>
 					</div>
 				{/if}
 			</div>
