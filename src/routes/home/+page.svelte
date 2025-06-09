@@ -144,11 +144,10 @@
 	}
 
 	async function deleteExpense(id) {
-		if (!confirm('Are you sure you want to delete this task?')) return;
+		if (!confirm('Are you sure you want to delete this expense?')) return;
 
 		try {
 			const res = await fetch(`/api/expenses/${id}`, {
-				// Note the URL change
 				method: 'DELETE',
 				headers: await getAuthHeaders()
 			});
@@ -201,6 +200,7 @@
 						bind:value={expense_category}
 						placeholder="Select Category"
 						class={`${inputStyle} bg-transparent text-white`}
+						required
 					>
 						<option value="" disabled selected>Select a category</option>
 						<option value="food">Food</option>
@@ -250,7 +250,7 @@
 							{#each expenses as expense}
 								<li
 									class={`flex w-[95%] items-center justify-between rounded-lg p-4 shadow
-										${
+                    ${
 											expense.expense_category === 'utilities'
 												? 'bg-gradient-to-r from-blue-500 to-blue-800'
 												: expense.expense_category === 'food'
@@ -263,12 +263,12 @@
 																? 'bg-gradient-to-r from-gray-400 to-gray-700'
 																: 'bg-gray-50'
 										}
-									`}
+                  `}
 								>
 									<!-- Left: Expense details in column -->
 									<div class="flex flex-col">
 										<span class="text-base text-white">{expense.expense_category}</span>
-										<span class="text-2xl font-bold text-white">{expense.expense_amount}</span>
+										<span class="text-2xl font-bold text-white">₱{expense.expense_amount}</span>
 										<span class="text-sm text-white">{expense.expense_note}</span>
 									</div>
 									<!-- Right: Buttons in row, justified end -->
@@ -289,64 +289,24 @@
 								</li>
 							{/each}
 						</ul>
-						<h1 class="ml-10 text-xl font-bold text-green-600">TOTAL MONEY SPENT TODAY: ₱</h1>
+						<h1 class="ml-10 text-xl font-bold text-green-600">
+							TOTAL MONEY SPENT TODAY: ₱
+							{expenses
+								.reduce((total, expense) => total + Number(expense.expense_amount), 0)
+								.toFixed(2)}
+						</h1>
 					</div>
 				{/if}
 
-				{#if showModal}
-					<div class="fixed inset-0 z-50 flex items-center justify-center">
-						<!-- Overlay with lower opacity, allows background to be visible but dimmed -->
-						<div class="bg-opacity-40 absolute inset-0 bg-black backdrop-blur-sm"></div>
-						<!-- Modal content -->
-						<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-							<h3 class="mb-4 text-xl font-bold">Edit Expense Added</h3>
-
-							<div class="mb-4">
-								<label for="category" class="mb-1 block text-sm font-medium">Category</label>
-								<select id="category" bind:value={modalCategory} class="w-full rounded border p-2">
-									<option value="" disabled>Select a category</option>
-									<option value="food">Food</option>
-									<option value="transportation">Transportation</option>
-									<option value="utilities">Utilities</option>
-									<option value="entertainment">Entertainment</option>
-									<option value="other">Other</option>
-								</select>
-							</div>
-							<div class="mb-4">
-								<label for="description" class="mb-1 block text-sm font-medium">Amount</label>
-								<input
-									bind:value={modalAmount}
-									class="w-full rounded border p-2"
-									placeholder="Expense amount"
-								/>
-							</div>
-
-							<div class="mb-4">
-								<label for="description" class="mb-1 block text-sm font-medium">Note</label>
-								<input
-									bind:value={modalNote}
-									class="w-full rounded border p-2"
-									placeholder="Expense note"
-								/>
-							</div>
-
-							<div class="flex justify-end space-x-2">
-								<button
-									onclick={closeModal}
-									class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
-								>
-									Cancel
-								</button>
-								<button
-									onclick={saveExpense}
-									class="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-								>
-									Save
-								</button>
-							</div>
-						</div>
-					</div>
-				{/if}
+				<ExpenseModal
+					bind:showModal
+					bind:editingExpenses
+					bind:modalCategory
+					bind:modalAmount
+					bind:modalNote
+					{closeModal}
+					{saveExpense}
+				/>
 			</div>
 		</div>
 	</div>
