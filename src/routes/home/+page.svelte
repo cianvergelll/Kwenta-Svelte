@@ -3,8 +3,6 @@
 
 	const inputStyle =
 		'w-[90%] py-2 border border-white rounded-lg pl-4 mb-2 text-white placeholder:text-white';
-
-	let name = 'User';
 </script>
 
 <div class="flex h-screen w-screen items-center justify-start bg-gray-100">

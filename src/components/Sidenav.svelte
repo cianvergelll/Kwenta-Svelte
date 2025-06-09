@@ -1,6 +1,6 @@
 <script lang="ts">
 	const tabs =
-		'white text-green-600 border w-[95%] font-bold text-lg py-3 text-center rounded-lg mb-2 hover:from-green-800 hover:to-green-500 transition duration-250 hover:scale-105';
+		'bg-gradient-to-r from-green-500 to-green-800 text-white mb-3 w-[95%] font-bold text-lg py-3 text-center rounded-lg mb-2 hover:from-green-800 hover:to-green-500 transition duration-250 hover:scale-105';
 </script>
 
 <div class="flex h-full w-full flex-col rounded-2xl bg-white shadow-2xl">

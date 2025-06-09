@@ -2,12 +2,11 @@ import { pool } from '$lib/db.js';
 import { createSession } from '$lib/session.js';
 
 export async function POST({ request, cookies }) {
-    const { username, password } = await request.json();
+    const { email, password } = await request.json();
 
     try {
-        const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
-        // In a real app, you should hash passwords and verify with bcrypt
         if (rows.length === 0 || rows[0].password !== password) {
             return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
                 status: 401,
@@ -27,7 +26,7 @@ export async function POST({ request, cookies }) {
 
         return new Response(JSON.stringify({
             message: 'Logged in successfully',
-            user: { id: rows[0].id, username: rows[0].username }
+            user: { id: rows[0].id, email: rows[0].email }
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
