@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Chart from 'chart.js/auto';
+	import ChartJS from 'chart.js/auto';
 	import type { ChartConfiguration, ChartTypeRegistry } from 'chart.js';
 	import { onMount } from 'svelte';
 
@@ -24,7 +24,7 @@
 	} = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
-	let chart: Chart | null = $state(null);
+	let chart: ChartJS | null = $state(null);
 
 	// Color scheme matching your expense categories
 	const categoryColors: Record<string, string> = {
@@ -42,16 +42,20 @@
 	const createChart = () => {
 		if (!canvas) return;
 
+		// Create copies of the arrays to avoid modifying the $state arrays directly
+		const labelsCopy = [...chartLabels];
+		const dataCopy = [...chartData];
+
 		const config: ChartConfiguration = {
-			type: chartType as keyof ChartTypeRegistry, // ✅ FIX 1
+			type: chartType as keyof ChartTypeRegistry,
 			data: {
-				labels: chartLabels,
+				labels: labelsCopy,
 				datasets: [
 					{
 						label: dataLabel,
-						data: chartData,
-						backgroundColor: getBackgroundColors(chartLabels),
-						borderColor: getBackgroundColors(chartLabels).map((color) => color.replace('0.7', '1')),
+						data: dataCopy,
+						backgroundColor: getBackgroundColors(labelsCopy),
+						borderColor: getBackgroundColors(labelsCopy).map((color) => color.replace('0.7', '1')),
 						borderWidth: 1
 					}
 				]
@@ -65,7 +69,6 @@
 					tooltip: {
 						callbacks: {
 							label: (context) => {
-								// ✅ FIX 2
 								return `₱${
 									typeof context.parsed.y === 'number'
 										? context.parsed.y.toFixed(2)
@@ -91,7 +94,7 @@
 			}
 		};
 
-		chart = new Chart(canvas, config);
+		chart = new ChartJS(canvas, config);
 	};
 
 	onMount(() => {
@@ -100,10 +103,14 @@
 
 	$effect(() => {
 		if (chart) {
-			chart.data.labels = chartLabels;
-			chart.data.datasets[0].data = chartData;
-			chart.data.datasets[0].backgroundColor = getBackgroundColors(chartLabels);
-			chart.data.datasets[0].borderColor = getBackgroundColors(chartLabels).map((color) =>
+			// Create copies of the arrays before updating the chart
+			const labelsCopy = [...chartLabels];
+			const dataCopy = [...chartData];
+
+			chart.data.labels = labelsCopy;
+			chart.data.datasets[0].data = dataCopy;
+			chart.data.datasets[0].backgroundColor = getBackgroundColors(labelsCopy);
+			chart.data.datasets[0].borderColor = getBackgroundColors(labelsCopy).map((color) =>
 				color.replace('0.7', '1')
 			);
 			chart.update();
@@ -111,7 +118,6 @@
 	});
 
 	$effect(() => {
-		// ✅ FIX 3
 		if (chart && chartType !== (chart.config as ChartConfiguration).type) {
 			chart.destroy();
 			createChart();

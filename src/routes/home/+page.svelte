@@ -111,6 +111,7 @@
 			}
 
 			expenses = await res.json();
+			processExpenseData(expenses);
 		} catch (error) {
 			console.error('Error loading expenses:', error);
 			errorMessage = 'Network error';
@@ -166,10 +167,55 @@
 		}
 	}
 
+	async function fetchExpenses() {
+		try {
+			const response = await fetch('/api/expenses');
+			if (!response.ok) throw new Error('Failed to fetch expenses');
+			return await response.json();
+		} catch (error) {
+			console.error('Error fetching expenses:', error);
+			return [];
+		}
+	}
+
+	let chartLabels = $state([]);
+	let chartData = $state([]);
+
+	onMount(async () => {
+		expenses = await fetchExpenses();
+		processExpenseData(expenses);
+	});
+
+	function processExpenseData(expenses) {
+		console.log('processExpenseData called');
+		const categoryMap = {};
+
+		expenses.forEach((expense) => {
+			const category = expense.expense_category;
+			const amount = parseFloat(expense.expense_amount);
+
+			if (!categoryMap[category]) {
+				categoryMap[category] = 0;
+			}
+			categoryMap[category] += amount;
+		});
+
+		chartLabels = Object.keys(categoryMap);
+		chartData = Object.values(categoryMap);
+
+		console.log(
+			'Processed data - Labels:',
+			$state.snapshot(chartLabels),
+			'Data:',
+			$state.snapshot(chartData)
+		);
+	}
+
 	function reloadChart() {
-		// Add your reload logic here
-		console.log('Reloading chart data...');
-		// You might want to fetch new data here and update the chartData
+		fetchExpenses().then((data) => {
+			expenses = data;
+			processExpenseData(expenses);
+		});
 	}
 
 	const inputStyle =
@@ -246,8 +292,8 @@
 		<div class="h-[50%] w-full">
 			<Chart
 				title="Expense Breakdown"
-				chartLabels={['Food', 'Transportation', 'Utilities', 'Entertainment', 'Other']}
-				chartData={[1000, 500, 800, 300, 200]}
+				{chartLabels}
+				{chartData}
 				dataLabel="Amount Spent"
 				chartType="bar"
 				onReload={reloadChart}
