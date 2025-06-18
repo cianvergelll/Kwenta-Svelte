@@ -27,9 +27,9 @@
 </script>
 
 {#if showModal}
-	<div class="fixed inset-0 z-50 flex items-center justify-center">
+	<div class="bac fixed inset-0.5 z-50 flex items-center justify-center">
 		<button
-			class="bg-opacity-40 absolute inset-0 bg-black backdrop-blur-sm"
+			class="bg-opacity-40 inset- absolute inset-0 backdrop-blur-sm"
 			on:click={closeModal}
 			on:keydown={(e) => e.key === 'Enter' && closeModal()}
 			aria-label="Close modal"
