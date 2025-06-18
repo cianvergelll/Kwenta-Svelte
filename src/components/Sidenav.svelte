@@ -35,8 +35,8 @@
 
 <div class="flex h-full w-full flex-col rounded-2xl bg-white shadow-2xl">
 	<ul class="flex flex-col items-center justify-start space-y-2 p-4">
-		<li class={`${tabs} mt-3`}><a href="foo">Expenses</a></li>
-		<li class={tabs}><a href="foo">Budget Planner</a></li>
+		<li class={`${tabs} mt-3`}><a href="/home">Expenses</a></li>
+		<li class={tabs}><a href="/budget-planner">Budget Planner</a></li>
 		<li class={tabs}><a href="foo">Bills Reminder</a></li>
 		<li class={tabs}><a href="foo">History</a></li>
 		<li class={tabs}><a href="foo">Notifications</a></li>
