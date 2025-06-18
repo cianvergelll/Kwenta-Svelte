@@ -9,16 +9,19 @@
 	</div>
 
 	<div class="mx-auto flex h-[95%] w-[35%] flex-col rounded-lg border border-gray-300 bg-white">
-		<label class="text-m mb-2 self-start pl-[5%]" for="budget-planner"
-			>Enter you monthly budget</label
-		>
-		<input
-			id="total-budget"
-			type="number"
-			placeholder="₱ 00.00"
-			class={`${inputStyle} mx-auto border border-gray-800 bg-transparent text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold`}
-			required
-		/>
+		<div class="">
+			<label class="text-m mb-2 self-start pl-[5%]" for="budget-planner"
+				>Enter you monthly budget</label
+			>
+			<input
+				id="total-budget"
+				type="number"
+				placeholder="₱ 00.00"
+				class={`${inputStyle}border border-gray-800 bg-transparent text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold`}
+				required
+			/>
+			<button aria-label="Add expense">Arrow</button>
+		</div>
 	</div>
 	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white"></div>
 </div>
