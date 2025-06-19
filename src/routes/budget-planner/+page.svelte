@@ -1,5 +1,6 @@
 <script>
 	import { error } from '@sveltejs/kit';
+	import { goto } from '$app/navigation';
 	import SideNav from '../../components/Sidenav.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
@@ -160,6 +161,20 @@
 	async function setBudget() {
 		errorMessage = '';
 
+		const budgetData = {
+			total_budget: Number(total_budget) || 0,
+			daily_limit: Number(daily_limit) || 0,
+			food_budget: 0,
+			transportation_budget: 0,
+			utilities_budget: 0,
+			entertainment_budget: 0,
+			other_budget: 0
+		};
+
+		category_budgets.forEach((item) => {
+			budgetData[item.category] = Number(item.amount) || 0;
+		});
+
 		try {
 			const res = await fetch('api/budget-planner', {
 				method: 'POST',
@@ -167,11 +182,7 @@
 				body: JSON.stringify({
 					total_budget,
 					daily_limit,
-					food_budget,
-					transportation_budget,
-					utilities_budget,
-					entertainment_budget,
-					other_budget
+					budgetData
 				})
 			});
 
@@ -183,12 +194,8 @@
 
 			total_budget = '';
 			daily_limit = '';
-			food_budget = '';
-			transportation_budget = '';
-			utilities_budget = '';
-			entertainment_budget = '';
-			other_budget = '';
-			// await loadBudgetPlan();
+			category_budgets = [];
+			has_data = false;
 		} catch (error) {
 			console.error('Error adding expenses:', error);
 		}
