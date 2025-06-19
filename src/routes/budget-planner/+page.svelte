@@ -1,7 +1,11 @@
 <script>
 	import SideNav from '../../components/Sidenav.svelte';
 
+	let budget_plan = $state([]);
+	let daily_limit = $state('');
+	let daily_spent = $state('');
 	let total_budget = $state('');
+	let remaining_budget = $state('');
 	let category_budgets = $state([]);
 	let selected_category = $state('food_budget');
 	let category_amount = $state(0);
@@ -14,13 +18,13 @@
 		{ name: 'other_budget', label: 'Other' }
 	];
 
-	// Calendar variables
+	function setMonthlyBudget() {}
+	let days_remaining_in_month = $state(0);
 	let currentDate = $state(new Date());
 	let selectedDate = $state(null);
 	let showMonthPicker = $state(false);
 	let showYearPicker = $state(false);
 
-	// Generate years for dropdown (10 years back and 10 years forward)
 	const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 10 + i);
 	const months = [
 		'January',
@@ -59,7 +63,6 @@
 		category_budgets = category_budgets.filter((item) => item.id !== id);
 	}
 
-	// Calendar functions
 	function getDaysInMonth(year, month) {
 		return new Date(year, month + 1, 0).getDate();
 	}
@@ -109,33 +112,63 @@
 </script>
 
 <div class="flex h-screen w-screen items-center justify-start bg-gray-100">
+	<!-- Side Navigation -->
 	<div class="ml-5 flex h-[95%] w-1/5 flex-col rounded-xl shadow-lg">
 		<SideNav />
 	</div>
 
+	<!-- Main Budget Content -->
 	<div class="mx-auto flex h-[95%] w-[35%] flex-col rounded-lg border border-gray-300 bg-white p-4">
-		<div class="mb-4">
-			<label class="text-m mb-2 block pl-[5%]" for="total-budget">
-				Enter your monthly budget
-			</label>
-			<div class="flex items-center">
-				<input
-					id="total-budget"
-					type="number"
-					placeholder="₱ 00.00"
-					bind:value={total_budget}
-					class={`${inputStyle} border border-gray-800 bg-transparent text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold`}
-					required
-				/>
-				<button
-					aria-label="Add expense"
-					class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
-				>
-					➔
-				</button>
+		<!-- Budget Input Section -->
+		<div class="mb-4 flex flex-col space-y-4 border-b border-gray-300">
+			<!-- Monthly Budget Input -->
+			<div class="flex flex-col">
+				<label class="text-m mb-2 block pl-[5%]" for="total-budget">
+					Enter your monthly budget
+				</label>
+				<div class="flex items-center">
+					<input
+						id="total-budget"
+						type="number"
+						placeholder="₱ 00.00"
+						bind:value={total_budget}
+						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold"
+						required
+					/>
+					<button
+						aria-label="Add expense"
+						class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
+					>
+						➔
+					</button>
+				</div>
+			</div>
+
+			<!-- Daily Spending Limit Input -->
+			<div class="flex flex-col">
+				<label class="text-m mb-2 block pl-[5%]" for="daily-limit">
+					Enter daily spending limit
+				</label>
+				<div class="flex items-center">
+					<input
+						id="daily-limit"
+						type="number"
+						placeholder="₱ 00.00"
+						bind:value={daily_limit}
+						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold"
+						required
+					/>
+					<button
+						aria-label="Add expense"
+						class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
+					>
+						➔
+					</button>
+				</div>
 			</div>
 		</div>
 
+		<!-- Category Budget Section -->
 		<div class="relative mx-auto my-2 h-[25%] w-[95%] rounded-2xl border border-gray-300 p-4">
 			<select bind:value={selected_category} class="mb-2 w-full rounded-lg border p-2">
 				{#each categories as category}
@@ -152,17 +185,18 @@
 
 			<button
 				onclick={addBudget}
-				class="absolute right-2 bottom-2 ${buttonStyle} bg-blue-500 text-white hover:bg-blue-600"
+				class="absolute right-2 bottom-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
 			>
 				Add Budget
 			</button>
 		</div>
 
+		<!-- Budget List or Calendar -->
 		<div
 			class="mx-auto my-5 h-[50%] w-[95%] overflow-y-auto rounded-2xl border border-gray-300 p-4"
 		>
 			{#if category_budgets.length === 0}
-				<!-- Enhanced Calendar Section -->
+				<!-- Calendar Section -->
 				<div class="calendar-container">
 					<div class="calendar-header mb-4 flex items-center justify-between">
 						<button onclick={prevMonth} class="rounded p-1 hover:bg-gray-200"> &lt; </button>
@@ -253,16 +287,15 @@
 								new Date().getFullYear() === currentDate.getFullYear()}
 							<button
 								onclick={() => selectDate(date)}
-								class="h-8 w-8 rounded-full text-center hover:bg-blue-100
-									{isSelected ? 'bg-blue-500 text-white' : ''}
-									{isToday ? 'border border-blue-500' : ''}"
+								class="h-8 w-8 rounded-full text-center hover:bg-blue-100 {isSelected
+									? 'bg-blue-500 text-white'
+									: ''} {isToday ? 'border border-blue-500' : ''}"
 							>
 								{date}
 							</button>
 						{/each}
 					</div>
 
-					<!-- Budget Status Legend -->
 					<div class="mt-4 flex items-center justify-center space-x-4">
 						<div class="flex items-center space-x-1">
 							<div class="h-3 w-3 rounded-full bg-green-500"></div>
@@ -298,83 +331,114 @@
 		</div>
 	</div>
 
-	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white p-4">
-		<div class="mx-auto w-[95%] space-y-4">
-			<h2 class="mb-6 text-xl font-bold">Budget Summary</h2>
+	<!-- Budget Summary Section - Optimized to prevent overflow -->
+	<div class="mr-5 flex h-[95%] w-[40%] flex-col rounded-lg border border-gray-300 bg-white p-4">
+		<div class="flex h-full flex-col">
+			<h2 class="mb-4 text-xl font-bold">Budget Summary</h2>
 
-			<div class="mx-auto mb-8 w-[95%] rounded-lg bg-gray-50 p-4">
-				<div class="mb-1 flex items-center justify-between">
-					<span class="font-medium">Total Budget</span>
-					<span class="font-medium">₱10,000</span>
+			<!-- Scrollable Content Area -->
+			<div class="flex-1 overflow-y-auto">
+				<!-- Monthly Budget Summary -->
+				<div class="mb-4 rounded-lg bg-gray-50 p-4">
+					<div class="mb-1 flex items-center justify-between">
+						<span class="font-medium">Total Monthly Budget</span>
+						<span class="font-medium">₱{total_budget.toLocaleString()}</span>
+					</div>
+					<div class="h-2.5 w-full rounded-full bg-gray-200">
+						<div class="h-2.5 rounded-full bg-blue-600" style="width: 100%"></div>
+					</div>
 				</div>
-				<div class="h-2.5 w-full rounded-full bg-gray-200">
-					<div class="h-2.5 rounded-full bg-blue-600" style="width: 100%"></div>
+
+				<!-- Daily Spending Limit Summary -->
+				<div class="mb-6 rounded-lg bg-gray-50 p-4">
+					<div class="mb-1 flex items-center justify-between">
+						<span class="font-medium">Daily Spending Limit</span>
+						<span class="font-medium">₱{daily_limit.toLocaleString()}</span>
+					</div>
+					<div class="h-2.5 w-full rounded-full bg-gray-200">
+						<div
+							class="h-2.5 rounded-full bg-green-600"
+							style="width: {((daily_limit - daily_spent) / daily_limit) * 100}%"
+						></div>
+					</div>
+					<div class="mt-2 text-sm text-gray-600">
+						<span>Remaining today: </span>
+						<span class="font-medium">₱{(daily_limit - daily_spent).toLocaleString()}</span>
+					</div>
+				</div>
+
+				<!-- Compact Category Breakdown -->
+				<div class="space-y-3">
+					<div class="rounded-lg border border-gray-200 p-3">
+						<div class="mb-1 flex items-center justify-between text-sm">
+							<span>Food</span>
+							<span class="font-medium">₱2,500 remaining (of ₱4,000)</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-200">
+							<div class="h-2 rounded-full bg-green-500" style="width: 62.5%"></div>
+						</div>
+					</div>
+
+					<div class="rounded-lg border border-gray-200 p-3">
+						<div class="mb-1 flex items-center justify-between text-sm">
+							<span>Transportation</span>
+							<span class="font-medium">₱1,200 remaining (of ₱2,000)</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-200">
+							<div class="h-2 rounded-full bg-yellow-500" style="width: 60%"></div>
+						</div>
+					</div>
+
+					<div class="rounded-lg border border-gray-200 p-3">
+						<div class="mb-1 flex items-center justify-between text-sm">
+							<span>Utilities</span>
+							<span class="font-medium">₱3,000 remaining (of ₱5,000)</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-200">
+							<div class="h-2 rounded-full bg-red-500" style="width: 60%"></div>
+						</div>
+					</div>
+
+					<div class="rounded-lg border border-gray-200 p-3">
+						<div class="mb-1 flex items-center justify-between text-sm">
+							<span>Entertainment</span>
+							<span class="font-medium">₱1,500 remaining (of ₱3,000)</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-200">
+							<div class="h-2 rounded-full bg-purple-500" style="width: 50%"></div>
+						</div>
+					</div>
+
+					<div class="rounded-lg border border-gray-200 p-3">
+						<div class="mb-1 flex items-center justify-between text-sm">
+							<span>Other</span>
+							<span class="font-medium">₱1,800 remaining (of ₱2,000)</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-200">
+							<div class="h-2 rounded-full bg-pink-500" style="width: 90%"></div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Total Remaining -->
+				<div class="mt-6 rounded-lg bg-gray-50 p-4">
+					<div class="flex items-center justify-between">
+						<span class="font-semibold">Total Remaining</span>
+						<span class="font-semibold">₱{remaining_budget.toLocaleString()}</span>
+					</div>
+					<div class="mt-1 flex items-center justify-between text-xs">
+						<span class="text-gray-600">Daily average available:</span>
+						<span class="font-medium"
+							>₱{(remaining_budget / days_remaining_in_month).toFixed(2)}</span
+						>
+					</div>
 				</div>
 			</div>
 
-			<div class="mx-auto w-[95%] space-y-4">
-				<div class="rounded-lg border border-gray-200 p-3">
-					<div class="mb-1 flex items-center justify-between">
-						<span>Food</span>
-						<span class="font-medium">₱2,500 remaining (of ₱4,000)</span>
-					</div>
-					<div class="h-2.5 w-full rounded-full bg-gray-200">
-						<div class="h-2.5 rounded-full bg-green-500" style="width: 62.5%"></div>
-					</div>
-				</div>
-
-				<div class="rounded-lg border border-gray-200 p-3">
-					<div class="mb-1 flex items-center justify-between">
-						<span>Transportation</span>
-						<span class="font-medium">₱1,200 remaining (of ₱2,000)</span>
-					</div>
-					<div class="h-2.5 w-full rounded-full bg-gray-200">
-						<div class="h-2.5 rounded-full bg-yellow-500" style="width: 60%"></div>
-					</div>
-				</div>
-
-				<div class="rounded-lg border border-gray-200 p-3">
-					<div class="mb-1 flex items-center justify-between">
-						<span>Utilities</span>
-						<span class="font-medium">₱3,000 remaining (of ₱5,000)</span>
-					</div>
-					<div class="h-2.5 w-full rounded-full bg-gray-200">
-						<div class="h-2.5 rounded-full bg-red-500" style="width: 60%"></div>
-					</div>
-				</div>
-
-				<div class="rounded-lg border border-gray-200 p-3">
-					<div class="mb-1 flex items-center justify-between">
-						<span>Entertainment</span>
-						<span class="font-medium">₱1,500 remaining (of ₱3,000)</span>
-					</div>
-					<div class="h-2.5 w-full rounded-full bg-gray-200">
-						<div class="h-2.5 rounded-full bg-purple-500" style="width: 50%"></div>
-					</div>
-				</div>
-
-				<div class="rounded-lg border border-gray-200 p-3">
-					<div class="mb-1 flex items-center justify-between">
-						<span>Other</span>
-						<span class="font-medium">₱1,800 remaining (of ₱2,000)</span>
-					</div>
-					<div class="h-2.5 w-full rounded-full bg-gray-200">
-						<div class="h-2.5 rounded-full bg-pink-500" style="width: 90%"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="mx-auto mt-8 w-[95%] rounded-lg bg-gray-50 p-4">
-				<div class="flex items-center justify-between">
-					<span class="font-semibold">Total Remaining</span>
-					<span class="font-semibold">₱10,000</span>
-				</div>
-			</div>
-
-			<!-- Moved buttons here -->
-			<div class="flex justify-end space-x-4 pt-4">
-				<button class={`${buttonStyle} bg-gray-200 hover:bg-gray-300`}> Edit </button>
-				<button class={`${buttonStyle} bg-blue-500 text-white hover:bg-blue-600`}>
+			<!-- Fixed Footer Buttons -->
+			<div class="mt-auto flex justify-end space-x-3 pt-4">
+				<button class="rounded-lg bg-gray-200 px-3 py-1.5 text-sm hover:bg-gray-300">Edit</button>
+				<button class="rounded-lg bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600">
 					Set Budget
 				</button>
 			</div>
