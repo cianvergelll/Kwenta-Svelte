@@ -30,9 +30,9 @@ export async function POST({ request, locals }) {
     }
 
     try {
-        const { total_budget, food_budget, transportation_budget, utilities_budget, entertainment_budget } = await request.json();
+        const { total_budget, daily_limit, food_budget, transportation_budget, utilities_budget, entertainment_budget, others_budget } = await request.json();
 
-        await pool.query('INSERT INTO budget_plan (user_id, total_budget, food_budget, transportation_budget, utilities_budget, entertainment_budget) VALUES (?, ?, ?, ?,?,?)', [locals.user.id, total_budget, food_budget, transportation_budget, utilities_budget, entertainment_budget]);
+        await pool.query('INSERT INTO budget_plan (user_id, total_budget, daily_limit, food_budget, transportation_budget, utilities_budget, entertainment_budget, others_budget) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [locals.user.id, total_budget, daily_limit, food_budget, transportation_budget, utilities_budget, entertainment_budget, others_budget]);
 
         return new Response(JSON.stringify({ message: 'Budget plan added' }), {
             status: 201,

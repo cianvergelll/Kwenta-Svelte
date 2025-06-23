@@ -14,14 +14,15 @@
 	let category_budgets = $state([]);
 	let selected_category = $state('food_budget');
 	let category_amount = $state(0);
-	let has_data = $state(false); // Track if any data exists
+	let has_data = $state(false);
+	let isLoading = $state(false);
 
 	let categories = [
 		{ name: 'food_budget', label: 'Food' },
 		{ name: 'transportation_budget', label: 'Transportation' },
 		{ name: 'utilities_budget', label: 'Utilities' },
 		{ name: 'entertainment_budget', label: 'Entertainment' },
-		{ name: 'other_budget', label: 'Other' }
+		{ name: 'others_budget', label: 'Other' }
 	];
 
 	function setMonthlyBudget() {
@@ -143,7 +144,7 @@
 				return;
 			}
 
-			// await loadExpenses();
+			await loadBudget();
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
@@ -158,6 +159,28 @@
 		};
 	}
 
+	async function loadBudget() {
+		isLoading = true;
+		errorMessage = '';
+		try {
+			const res = await fetch('api/budget-planner', {
+				headers: await getAuthHeaders()
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to load budget';
+				return;
+			}
+			budget_plan = await res.json();
+		} catch (error) {
+			console.error('Error loading budget:', error);
+			errorMessage = 'Network error';
+		} finally {
+			isLoading = false;
+		}
+	}
+
 	async function setBudget() {
 		errorMessage = '';
 
@@ -168,7 +191,7 @@
 			transportation_budget: 0,
 			utilities_budget: 0,
 			entertainment_budget: 0,
-			other_budget: 0
+			others_budget: 0
 		};
 
 		category_budgets.forEach((item) => {
@@ -179,13 +202,8 @@
 			const res = await fetch('api/budget-planner', {
 				method: 'POST',
 				headers: await getAuthHeaders(),
-				body: JSON.stringify({
-					total_budget,
-					daily_limit,
-					budgetData
-				})
+				body: JSON.stringify(budgetData)
 			});
-
 			if (!res.ok) {
 				const err = await res.json();
 				errorMessage = err.error || 'Failed to set budget';
@@ -197,7 +215,7 @@
 			category_budgets = [];
 			has_data = false;
 		} catch (error) {
-			console.error('Error adding expenses:', error);
+			console.error('Error adding budget:', error);
 		}
 	}
 </script>
