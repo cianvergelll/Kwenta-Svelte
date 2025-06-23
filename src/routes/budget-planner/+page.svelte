@@ -13,7 +13,7 @@
 	let remaining_budget = $state('');
 	let category_budgets = $state([]);
 	let selected_category = $state('food_budget');
-	let category_amount = $state(0);
+	let category_amount = $state('');
 	let has_data = $state(false);
 	let isLoading = $state(false);
 	let hasExistingBudget = $state(false);
@@ -424,7 +424,7 @@
 
 				<input
 					type="number"
-					placeholder="Amount"
+					placeholder="Enter amount"
 					bind:value={category_amount}
 					class="mb-2 w-full rounded-lg border p-2 disabled:bg-gray-100 disabled:opacity-70"
 					disabled={hasExistingBudget && !isEditMode}
