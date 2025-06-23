@@ -59,9 +59,19 @@
 	];
 
 	function addBudget() {
-		if (category_amount <= 0) return;
+		if (category_amount <= 0) {
+			errorMessage = 'Please enter a valid amount';
+			return;
+		}
+
+		// Check if category already has a budget
+		if (category_budgets.some((item) => item.category === selected_category)) {
+			errorMessage = `You already have a budget for ${categories.find((c) => c.name === selected_category).label}`;
+			return;
+		}
 
 		has_data = true;
+		errorMessage = '';
 
 		category_budgets = [
 			...category_budgets,
@@ -150,6 +160,9 @@
 				},
 				{ category: 'others_budget', amount: originalBudgetData.others_budget, id: 5 }
 			].filter((item) => item.amount > 0);
+		} else {
+			// Clear input fields when entering edit mode
+			category_amount = 0;
 		}
 	}
 
@@ -347,11 +360,11 @@
 						type="number"
 						placeholder="₱ 00.00"
 						bind:value={total_budget}
-						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold"
+						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold disabled:bg-gray-100 disabled:opacity-70"
 						required
 						disabled={hasExistingBudget && !isEditMode}
 					/>
-					{#if !hasExistingBudget || isEditMode}
+					{#if (!hasExistingBudget || isEditMode) && total_budget > 0}
 						<button
 							onclick={setMonthlyBudget}
 							aria-label="Add expense"
@@ -374,11 +387,11 @@
 						type="number"
 						placeholder="₱ 00.00"
 						bind:value={daily_limit}
-						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold"
+						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold disabled:bg-gray-100 disabled:opacity-70"
 						required
 						disabled={hasExistingBudget && !isEditMode}
 					/>
-					{#if !hasExistingBudget || isEditMode}
+					{#if (!hasExistingBudget || isEditMode) && daily_limit > 0}
 						<button
 							onclick={setDailyLimit}
 							aria-label="Add expense"
@@ -393,8 +406,17 @@
 
 		<!-- Category Budget Section -->
 		{#if hasExistingBudget || isEditMode}
-			<div class="relative mx-auto my-2 h-[25%] w-[95%] rounded-2xl border border-gray-300 p-4">
-				<select bind:value={selected_category} class="mb-2 w-full rounded-lg border p-2">
+			<div
+				class="relative mx-auto my-2 h-[25%] w-[95%] rounded-2xl border border-gray-300 p-4 {hasExistingBudget &&
+				!isEditMode
+					? 'opacity-70'
+					: ''}"
+			>
+				<select
+					bind:value={selected_category}
+					class="mb-2 w-full rounded-lg border p-2 disabled:bg-gray-100 disabled:opacity-70"
+					disabled={hasExistingBudget && !isEditMode}
+				>
 					{#each categories as category}
 						<option value={category.name}>{category.label}</option>
 					{/each}
@@ -404,15 +426,24 @@
 					type="number"
 					placeholder="Amount"
 					bind:value={category_amount}
-					class="mb-2 w-full rounded-lg border p-2"
+					class="mb-2 w-full rounded-lg border p-2 disabled:bg-gray-100 disabled:opacity-70"
+					disabled={hasExistingBudget && !isEditMode}
 				/>
 
 				<button
 					onclick={addBudget}
-					class="absolute right-2 bottom-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+					class="absolute right-2 bottom-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
+					disabled={hasExistingBudget && !isEditMode}
 				>
 					Add Budget
 				</button>
+			</div>
+		{/if}
+
+		<!-- Error Message Display -->
+		{#if errorMessage}
+			<div class="mx-auto mb-4 w-[95%] rounded-lg bg-red-100 p-3 text-center text-red-700">
+				{errorMessage}
 			</div>
 		{/if}
 
