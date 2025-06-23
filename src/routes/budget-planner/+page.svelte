@@ -16,6 +16,9 @@
 	let category_amount = $state(0);
 	let has_data = $state(false);
 	let isLoading = $state(false);
+	let hasExistingBudget = $state(false);
+	let isEditMode = $state(false);
+	let originalBudgetData = $state(null);
 
 	let categories = [
 		{ name: 'food_budget', label: 'Food' },
@@ -126,6 +129,70 @@
 		showYearPicker = false;
 	}
 
+	function toggleEditMode() {
+		isEditMode = !isEditMode;
+		if (!isEditMode && hasExistingBudget) {
+			// Reset to original values when canceling edit
+			total_budget = originalBudgetData.total_budget;
+			daily_limit = originalBudgetData.daily_limit;
+			category_budgets = [
+				{ category: 'food_budget', amount: originalBudgetData.food_budget, id: 1 },
+				{
+					category: 'transportation_budget',
+					amount: originalBudgetData.transportation_budget,
+					id: 2
+				},
+				{ category: 'utilities_budget', amount: originalBudgetData.utilities_budget, id: 3 },
+				{
+					category: 'entertainment_budget',
+					amount: originalBudgetData.entertainment_budget,
+					id: 4
+				},
+				{ category: 'others_budget', amount: originalBudgetData.others_budget, id: 5 }
+			].filter((item) => item.amount > 0);
+		}
+	}
+
+	async function updateBudget() {
+		errorMessage = '';
+
+		const budgetData = {
+			total_budget: Number(total_budget) || 0,
+			daily_limit: Number(daily_limit) || 0,
+			food_budget: 0,
+			transportation_budget: 0,
+			utilities_budget: 0,
+			entertainment_budget: 0,
+			others_budget: 0
+		};
+
+		category_budgets.forEach((item) => {
+			budgetData[item.category] = Number(item.amount) || 0;
+		});
+
+		try {
+			const res = await fetch('api/budget-planner', {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify(budgetData)
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to update budget';
+				return;
+			}
+
+			// Update our original data and exit edit mode
+			originalBudgetData = budgetData;
+			hasExistingBudget = true;
+			isEditMode = false;
+		} catch (error) {
+			console.error('Error updating budget:', error);
+			errorMessage = 'Failed to update budget';
+		}
+	}
+
 	onMount(async () => {
 		const token = localStorage.getItem('sessionToken');
 		if (!token) {
@@ -144,7 +211,7 @@
 				return;
 			}
 
-			await loadBudget();
+			await loadBudgetData();
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
@@ -159,7 +226,7 @@
 		};
 	}
 
-	async function loadBudget() {
+	async function loadBudgetData() {
 		isLoading = true;
 		errorMessage = '';
 		try {
@@ -172,7 +239,27 @@
 				errorMessage = err.error || 'Failed to load budget';
 				return;
 			}
-			budget_plan = await res.json();
+
+			const data = await res.json();
+
+			if (data && data.length > 0) {
+				const budget = data[0];
+				originalBudgetData = budget;
+
+				total_budget = budget.total_budget;
+				daily_limit = budget.daily_limit;
+
+				category_budgets = [
+					{ category: 'food_budget', amount: budget.food_budget, id: 1 },
+					{ category: 'transportation_budget', amount: budget.transportation_budget, id: 2 },
+					{ category: 'utilities_budget', amount: budget.utilities_budget, id: 3 },
+					{ category: 'entertainment_budget', amount: budget.entertainment_budget, id: 4 },
+					{ category: 'others_budget', amount: budget.others_budget, id: 5 }
+				].filter((item) => item.amount > 0);
+
+				hasExistingBudget = true;
+				has_data = true;
+			}
 		} catch (error) {
 			console.error('Error loading budget:', error);
 			errorMessage = 'Network error';
@@ -200,22 +287,41 @@
 
 		try {
 			const res = await fetch('api/budget-planner', {
-				method: 'POST',
+				method: hasExistingBudget ? 'PUT' : 'POST',
 				headers: await getAuthHeaders(),
 				body: JSON.stringify(budgetData)
 			});
+
 			if (!res.ok) {
 				const err = await res.json();
 				errorMessage = err.error || 'Failed to set budget';
 				return;
 			}
 
-			total_budget = '';
-			daily_limit = '';
-			category_budgets = [];
-			has_data = false;
+			originalBudgetData = budgetData;
+			hasExistingBudget = true;
+			isEditMode = false;
 		} catch (error) {
-			console.error('Error adding budget:', error);
+			console.error('Error adding expenses:', error);
+			errorMessage = 'Failed to save budget';
+		}
+	}
+
+	// Helper function to get gradient class based on category
+	function getCategoryColor(category) {
+		switch (category) {
+			case 'utilities_budget':
+				return 'bg-gradient-to-r from-blue-500 to-blue-800';
+			case 'food_budget':
+				return 'bg-gradient-to-r from-pink-500 to-pink-800';
+			case 'transportation_budget':
+				return 'bg-gradient-to-r from-yellow-500 to-yellow-800';
+			case 'entertainment_budget':
+				return 'bg-gradient-to-r from-purple-500 to-purple-800';
+			case 'others_budget':
+				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			default:
+				return 'bg-gray-50';
 		}
 	}
 </script>
@@ -243,14 +349,17 @@
 						bind:value={total_budget}
 						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold"
 						required
+						disabled={hasExistingBudget && !isEditMode}
 					/>
-					<button
-						onclick={setMonthlyBudget}
-						aria-label="Add expense"
-						class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
-					>
-						➔
-					</button>
+					{#if !hasExistingBudget || isEditMode}
+						<button
+							onclick={setMonthlyBudget}
+							aria-label="Add expense"
+							class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
+						>
+							➔
+						</button>
+					{/if}
 				</div>
 			</div>
 
@@ -267,40 +376,45 @@
 						bind:value={daily_limit}
 						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold"
 						required
+						disabled={hasExistingBudget && !isEditMode}
 					/>
-					<button
-						onclick={setDailyLimit}
-						aria-label="Add expense"
-						class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
-					>
-						➔
-					</button>
+					{#if !hasExistingBudget || isEditMode}
+						<button
+							onclick={setDailyLimit}
+							aria-label="Add expense"
+							class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
+						>
+							➔
+						</button>
+					{/if}
 				</div>
 			</div>
 		</div>
 
 		<!-- Category Budget Section -->
-		<div class="relative mx-auto my-2 h-[25%] w-[95%] rounded-2xl border border-gray-300 p-4">
-			<select bind:value={selected_category} class="mb-2 w-full rounded-lg border p-2">
-				{#each categories as category}
-					<option value={category.name}>{category.label}</option>
-				{/each}
-			</select>
+		{#if hasExistingBudget || isEditMode}
+			<div class="relative mx-auto my-2 h-[25%] w-[95%] rounded-2xl border border-gray-300 p-4">
+				<select bind:value={selected_category} class="mb-2 w-full rounded-lg border p-2">
+					{#each categories as category}
+						<option value={category.name}>{category.label}</option>
+					{/each}
+				</select>
 
-			<input
-				type="number"
-				placeholder="Amount"
-				bind:value={category_amount}
-				class="mb-2 w-full rounded-lg border p-2"
-			/>
+				<input
+					type="number"
+					placeholder="Amount"
+					bind:value={category_amount}
+					class="mb-2 w-full rounded-lg border p-2"
+				/>
 
-			<button
-				onclick={addBudget}
-				class="absolute right-2 bottom-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-			>
-				Add Budget
-			</button>
-		</div>
+				<button
+					onclick={addBudget}
+					class="absolute right-2 bottom-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+				>
+					Add Budget
+				</button>
+			</div>
+		{/if}
 
 		<!-- Budget List or Calendar -->
 		<div
@@ -308,6 +422,20 @@
 		>
 			<!-- Calendar Section -->
 			<div class="calendar-container">
+				<div class="mt-4 flex items-center justify-center space-x-4">
+					<div class="flex items-center space-x-1">
+						<div class="h-3 w-3 rounded-full bg-green-500"></div>
+						<span class="text-xs">On Track</span>
+					</div>
+					<div class="flex items-center space-x-1">
+						<div class="h-3 w-3 rounded-full bg-yellow-500"></div>
+						<span class="text-xs">Caution</span>
+					</div>
+					<div class="flex items-center space-x-1">
+						<div class="h-3 w-3 rounded-full bg-red-500"></div>
+						<span class="text-xs">Overspending</span>
+					</div>
+				</div>
 				<div class="calendar-header mb-4 flex items-center justify-between">
 					<button onclick={prevMonth} class="rounded p-1 hover:bg-gray-200"> &lt; </button>
 
@@ -404,26 +532,11 @@
 						</button>
 					{/each}
 				</div>
-
-				<div class="mt-4 flex items-center justify-center space-x-4">
-					<div class="flex items-center space-x-1">
-						<div class="h-3 w-3 rounded-full bg-green-500"></div>
-						<span class="text-xs">On Track</span>
-					</div>
-					<div class="flex items-center space-x-1">
-						<div class="h-3 w-3 rounded-full bg-yellow-500"></div>
-						<span class="text-xs">Caution</span>
-					</div>
-					<div class="flex items-center space-x-1">
-						<div class="h-3 w-3 rounded-full bg-red-500"></div>
-						<span class="text-xs">Overspending</span>
-					</div>
-				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- Budget Summary Section - Optimized to prevent overflow -->
+	<!-- Budget Summary Section -->
 	<div class="mr-5 flex h-[95%] w-[40%] flex-col rounded-lg border border-gray-300 bg-white p-4">
 		<div class="flex h-full flex-col">
 			<h2 class="mb-4 text-xl font-bold">Budget Summary</h2>
@@ -471,12 +584,39 @@
 							<div transition:fade class="rounded-lg border border-gray-200 p-3">
 								<div class="mb-1 flex items-center justify-between text-sm">
 									<span>{categories.find((c) => c.name === item.category)?.label}</span>
-									<span class="font-medium">
-										₱{item.amount.toLocaleString()} remaining (of ₱{item.amount.toLocaleString()})
-									</span>
+									<div class="flex items-center">
+										<span class="mr-2 font-medium">
+											₱{item.amount.toLocaleString()} remaining (of ₱{item.amount.toLocaleString()})
+										</span>
+										{#if isEditMode}
+											<button
+												aria-label="Remove budget"
+												onclick={() => removeBudget(item.id)}
+												class="text-red-500 hover:text-red-700"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="h-5 w-5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+													/>
+												</svg>
+											</button>
+										{/if}
+									</div>
 								</div>
 								<div class="h-2 w-full rounded-full bg-gray-200">
-									<div class="h-2 rounded-full bg-green-500" style="width: 100%"></div>
+									<div
+										class="h-2 rounded-full {getCategoryColor(item.category)}"
+										style="width: 100%"
+									></div>
 								</div>
 							</div>
 						{/each}
@@ -504,12 +644,28 @@
 
 				<!-- Fixed Footer Buttons -->
 				<div class="flex justify-end space-x-3 pt-4">
-					<button class="rounded-lg bg-gray-200 px-3 py-1.5 text-sm hover:bg-gray-300">Edit</button>
+					{#if hasExistingBudget}
+						<button
+							onclick={toggleEditMode}
+							class="rounded-lg bg-gray-200 px-3 py-1.5 text-sm hover:bg-gray-300"
+						>
+							{#if isEditMode}
+								Cancel
+							{:else}
+								Edit
+							{/if}
+						</button>
+					{/if}
 					<button
 						onclick={setBudget}
-						class="rounded-lg bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600"
+						class="rounded-lg bg-blue-500 px-3 py-1.5 text-sm text-white hover:bg-blue-600 disabled:bg-blue-300"
+						disabled={!has_data || (hasExistingBudget && !isEditMode)}
 					>
-						Set Budget
+						{#if hasExistingBudget}
+							Update Budget
+						{:else}
+							Set Budget
+						{/if}
 					</button>
 				</div>
 			</div>
