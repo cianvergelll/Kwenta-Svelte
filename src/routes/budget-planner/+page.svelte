@@ -10,7 +10,7 @@
 	let daily_limit = $state('');
 	let daily_spent = $state('');
 	let total_budget = $state('');
-	let remaining_budget = $state('');
+	let remaining_budget = $state(0);
 	let category_budgets = $state([]);
 	let selected_category = $state('food_budget');
 	let category_amount = $state('');
@@ -27,6 +27,10 @@
 		{ name: 'entertainment_budget', label: 'Entertainment' },
 		{ name: 'others_budget', label: 'Other' }
 	];
+
+	function calculateRemainingBudget() {
+		remaining_budget = total_budget;
+	}
 
 	function setMonthlyBudget() {
 		if (total_budget > 0) has_data = true;

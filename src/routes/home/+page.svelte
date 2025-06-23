@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import ExpenseModal from '../../components/ExpenseModal.svelte';
 	import Chart from '../../components/Chart.svelte';
+	import { writable } from 'svelte/store';
 
 	let expenses = $state([]);
 	let expense_amount = $state('');
@@ -12,6 +13,7 @@
 	let errorMessage = $state('');
 	let isLoading = $state(false);
 	let expensesList = $state(null);
+	let total_spent = writable(0);
 
 	let showModal = $state(false);
 	let editingExpenses = $state(null);
