@@ -4,7 +4,7 @@
 	import SideNav from '../../components/Sidenav.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
-	import { totalSpent } from '../stores';
+	import { totalSpent } from '$lib/stores/totalSpent';
 
 	let budget_plan = $state([]);
 	let errorMessage = $state('');

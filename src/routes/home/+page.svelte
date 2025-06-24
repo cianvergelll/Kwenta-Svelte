@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import ExpenseModal from '../../components/ExpenseModal.svelte';
 	import Chart from '../../components/Chart.svelte';
-	import { totalSpent } from '../stores';
+	import { totalSpent } from '../../lib/stores/totalSpent';
 
 	let expenses = $state([]);
 	let expense_amount = $state('');
