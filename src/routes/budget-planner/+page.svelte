@@ -222,6 +222,9 @@
 				daily_spent = dailyTotal || 0;
 				categorySpending = monthlyData || {};
 
+				const monthlyTotal = Object.values(monthlyData).reduce((sum, val) => sum + val, 0);
+				totalSpent.set(monthlyTotal);
+
 				category_budgets = [
 					{ category: 'food_budget', amount: budget.food_budget, id: 1 },
 					{ category: 'transportation_budget', amount: budget.transportation_budget, id: 2 },

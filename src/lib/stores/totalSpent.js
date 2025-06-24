@@ -1,3 +1,14 @@
 import { writable } from 'svelte/store';
 
-export const totalSpent = writable(0);
+// Initialize with localStorage value if available
+const storedTotal = typeof localStorage !== 'undefined' ?
+    parseFloat(localStorage.getItem('totalSpent')) || 0 : 0;
+
+export const totalSpent = writable(storedTotal);
+
+// Persist to localStorage on changes (only in browser)
+if (typeof localStorage !== 'undefined') {
+    totalSpent.subscribe(value => {
+        localStorage.setItem('totalSpent', value.toString());
+    });
+}
