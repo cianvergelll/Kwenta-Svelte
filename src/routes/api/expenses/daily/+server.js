@@ -9,6 +9,8 @@ export async function GET({ locals }) {
 	}
 
 	try {
+
+		// Get today's expenses
 		const [rows] = await pool.query(`
             SELECT SUM(expense_amount) as total
             FROM expenses

@@ -9,6 +9,22 @@ export async function GET({ locals }) {
     }
 
     try {
+        // Check if month has changed
+        const [monthCheck] = await pool.query(
+            `SELECT MAX(created_at) as last_date FROM expenses 
+             WHERE user_id = ?`,
+            [locals.user.id]
+        );
+
+        if (monthCheck[0].last_date &&
+            new Date(monthCheck[0].last_date).getMonth() !== new Date().getMonth()) {
+            await pool.query(
+                `DELETE FROM monthly_cache 
+                 WHERE user_id = ?`,
+                [locals.user.id]
+            );
+        }
+
         const [rows] = await pool.query(`
             SELECT 
                 CASE expense_category
@@ -19,10 +35,11 @@ export async function GET({ locals }) {
             FROM expenses
             WHERE user_id = ?
             AND MONTH(created_at) = MONTH(CURRENT_DATE())
+            AND YEAR(created_at) = YEAR(CURRENT_DATE())
             GROUP BY category
         `, [locals.user.id]);
 
-        // Initialize with all expected categories set to 0
+        // Standardize response format
         const categoryMap = {
             food_budget: 0,
             transportation_budget: 0,
@@ -31,7 +48,6 @@ export async function GET({ locals }) {
             others_budget: 0
         };
 
-        // Update with actual values
         rows.forEach(row => {
             if (categoryMap.hasOwnProperty(row.category)) {
                 categoryMap[row.category] = parseFloat(row.total);
@@ -42,7 +58,9 @@ export async function GET({ locals }) {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch monthly expenses' }), {
+        return new Response(JSON.stringify({
+            error: 'Failed to fetch monthly expenses'
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
