@@ -26,7 +26,7 @@ export async function POST({ request, cookies }) {
 
         return new Response(JSON.stringify({
             message: 'Logged in successfully',
-            user: { id: rows[0].user_id, email: rows[0].email } // Also changed here
+            user: { id: rows[0].user_id, email: rows[0].email }
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
