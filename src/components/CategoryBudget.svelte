@@ -9,10 +9,10 @@
 	export let isOnPage;
 </script>
 
-<div class="flex-1 overflow-y-auto">
-	<div class="space-y-3">
-		{#each category_budgets as item (item.id)}
-			{#if isOnPage === true}
+{#if isOnPage}
+	<div class="flex-1">
+		<div class="space-y-3">
+			{#each category_budgets as item (item.id)}
 				<div transition:fade class="rounded-lg border border-gray-200 p-3">
 					<div class="mb-1 flex items-center justify-between text-sm">
 						<span>{categories.find((c) => c.name === item.category)?.label}</span>
@@ -60,8 +60,14 @@
 						></div>
 					</div>
 				</div>
-			{:else}
-				<div transition:fade class="rounded-lg border border-gray-200 p-2">
+			{/each}
+		</div>
+	</div>
+{:else}
+	<div class="w-full flex-1 p-4">
+		<div class="space-y-4">
+			{#each category_budgets as item (item.id)}
+				<div transition:fade class="w-full flex-1 p-1">
 					<div class="mb-1 flex items-center justify-between">
 						<span class="text-sm font-medium">
 							{categories.find((c) => c.name === item.category)?.label}
@@ -73,7 +79,7 @@
 							)}%
 						</span>
 					</div>
-					<div class="h-2 w-full rounded-full bg-gray-200">
+					<div class="h-1 w-full rounded-full bg-gray-200">
 						<div
 							class="h-2 rounded-full {getCategoryColor(item.category)}"
 							style="width: {Math.max(
@@ -83,7 +89,7 @@
 						></div>
 					</div>
 				</div>
-			{/if}
-		{/each}
+			{/each}
+		</div>
 	</div>
-</div>
+{/if}
