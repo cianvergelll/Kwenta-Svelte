@@ -130,6 +130,7 @@
 
 			closeModal();
 			await loadExpenses();
+			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error updating expense:', error);
 			errorMessage = 'Network error while updating';
@@ -258,6 +259,7 @@
 			expense_category = '';
 			expense_note = '';
 			await loadExpenses();
+			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error adding expenses:', error);
 			errorMessage = 'Network error';
@@ -280,6 +282,7 @@
 			}
 
 			await loadExpenses();
+			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error deleting expense:', error);
 			errorMessage = 'Network error';
