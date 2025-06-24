@@ -584,11 +584,19 @@
 					<!-- Monthly Budget Summary -->
 					<div transition:slide class="mb-4 rounded-lg bg-gray-50 p-4">
 						<div class="mb-1 flex items-center justify-between">
-							<span class="font-medium">Total Monthly Budget</span>
-							<span class="font-medium">₱{total_budget.toLocaleString()}</span>
+							<span class="font-medium">Monthly Budget Tracker</span>
+							<span class="font-medium">
+								₱{(total_budget - $totalSpent).toLocaleString()}
+								<span class="text-sm text-gray-500">
+									({Math.min(100, Math.round(100 - ($totalSpent / total_budget) * 100))}% Left)
+								</span>
+							</span>
 						</div>
 						<div class="h-2.5 w-full rounded-full bg-gray-200">
-							<div class="h-2.5 rounded-full bg-blue-600" style="width: 100%"></div>
+							<div
+								class="h-2.5 rounded-full bg-blue-600"
+								style={`width: ${Math.min(100, 100 - ($totalSpent / total_budget) * 100)}%`}
+							></div>
 						</div>
 					</div>
 
@@ -667,14 +675,12 @@
 					<!-- Total Remaining -->
 					<div transition:slide class="mb-4 rounded-lg bg-gray-50 p-4">
 						<div class="flex items-center justify-between">
-							<span class="font-semibold">Total Remaining</span>
-							<span class="font-semibold">₱{total_budget - $totalSpent}</span>
+							<span class="font-semibold">Monthly Budget</span>
+							<span class="font-semibold">₱{Number(total_budget).toLocaleString('en-US')}.00</span>
 						</div>
 						<div class="mt-1 flex items-center justify-between text-xs">
-							<span class="text-gray-600">Daily average available:</span>
-							<span class="font-medium"
-								>₱{(remaining_budget / days_remaining_in_month).toFixed(2)}</span
-							>
+							<span class="text-gray-600">Daily Spending Limit</span>
+							<span class="font-medium">₱{Number(daily_limit).toLocaleString('en-US')}.00</span>
 						</div>
 					</div>
 				{/if}
