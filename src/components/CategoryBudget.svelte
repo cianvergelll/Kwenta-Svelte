@@ -23,7 +23,7 @@
 									item.amount - (categorySpending[item.category] || 0)
 								).toLocaleString()}
 								<span class="text-xs text-gray-500">
-									(of ₱{item.amount.toLocaleString()})
+									(remaining of ₱{item.amount.toLocaleString()})
 								</span>
 							</span>
 							{#if isEditMode}

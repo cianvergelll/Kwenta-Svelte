@@ -425,7 +425,6 @@
 		<div class="flex h-full flex-col">
 			<h2 class="mb-4 text-xl font-bold">Budget Summary</h2>
 
-			<!-- Fixed Top Section -->
 			<div class="sticky top-0 z-10 bg-white pb-4">
 				{#if has_data}
 					<!-- Monthly Budget Summary -->
@@ -447,7 +446,6 @@
 						</div>
 					</div>
 
-					<!-- Daily Spending Limit Summary - UPDATED -->
 					<div transition:slide class="mb-4 rounded-lg bg-gray-50 p-4">
 						<div class="mb-1 flex items-center justify-between">
 							<span class="font-medium">Daily Spending Tracker</span>
@@ -481,7 +479,6 @@
 				/>
 			</div>
 
-			<!-- Fixed Bottom Section (Outside Scroll) -->
 			<div class="sticky bottom-0 bg-white pt-4">
 				{#if has_data}
 					<!-- Total Remaining -->
@@ -497,7 +494,6 @@
 					</div>
 				{/if}
 
-				<!-- Fixed Footer Buttons -->
 				<div class="flex justify-end space-x-3 pt-4">
 					{#if hasExistingBudget}
 						<button
