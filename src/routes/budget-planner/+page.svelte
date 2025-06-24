@@ -23,6 +23,7 @@
 	let isEditMode = $state(false);
 	let originalBudgetData = $state(null);
 	let categorySpending = $state({});
+	let isOnPage = $state(true);
 
 	let categories = [
 		{ name: 'food_budget', label: 'Food' },
@@ -476,6 +477,7 @@
 					{isEditMode}
 					{removeBudget}
 					{getCategoryColor}
+					isOnPage={true}
 				/>
 			</div>
 

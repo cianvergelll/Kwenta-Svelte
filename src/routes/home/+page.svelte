@@ -5,6 +5,65 @@
 	import ExpenseModal from '../../components/ExpenseModal.svelte';
 	import Chart from '../../components/Chart.svelte';
 	import { totalSpent } from '../../lib/stores/totalSpent';
+	import CategoryBudget from '../../components/CategoryBudget.svelte';
+
+	let category_budgets = $state([]);
+	let categories = [
+		{ name: 'food_budget', label: 'Food' },
+		{ name: 'transportation_budget', label: 'Transportation' },
+		{ name: 'utilities_budget', label: 'Utilities' },
+		{ name: 'entertainment_budget', label: 'Entertainment' },
+		{ name: 'others_budget', label: 'Others' }
+	];
+	let categorySpending = $state({});
+	let isEditMode = $state(false);
+
+	// Existing functions
+	function removeBudget(id) {
+		category_budgets = category_budgets.filter((item) => item.id !== id);
+		if (category_budgets.length === 0 && !total_budget && !daily_limit) {
+			has_data = false;
+		}
+	}
+
+	async function fetchDailyExpenses() {
+		try {
+			const res = await fetch('/api/expenses/daily');
+			if (!res.ok) throw new Error('Failed to fetch daily expenses');
+			const { total } = await res.json();
+			daily_spent = total || 0;
+		} catch (err) {
+			console.error('Daily expenses fetch error:', err);
+		}
+	}
+
+	// New function to fetch monthly category expenses
+	async function fetchMonthlyCategoryExpenses() {
+		try {
+			const res = await fetch('/api/expenses/monthly');
+			if (!res.ok) throw new Error('Failed to fetch monthly expenses');
+			categorySpending = await res.json();
+		} catch (err) {
+			console.error('Monthly expenses fetch error:', err);
+		}
+	}
+
+	function getCategoryColor(category) {
+		switch (category) {
+			case 'utilities_budget':
+				return 'bg-gradient-to-r from-blue-500 to-blue-800';
+			case 'food_budget':
+				return 'bg-gradient-to-r from-pink-500 to-pink-800';
+			case 'transportation_budget':
+				return 'bg-gradient-to-r from-yellow-500 to-yellow-800';
+			case 'entertainment_budget':
+				return 'bg-gradient-to-r from-purple-500 to-purple-800';
+			case 'others_budget':
+				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			default:
+				return 'bg-gray-50';
+		}
+	}
 
 	let expenses = $state([]);
 	let expense_amount = $state('');
@@ -13,6 +72,11 @@
 	let errorMessage = $state('');
 	let isLoading = $state(false);
 	let expensesList = $state(null);
+	let originalBudgetData = $state(null);
+	let total_budget = $state('');
+	let daily_limit = $state('');
+	let daily_spent = $state(0);
+	let isOnPage = $state(false);
 
 	$effect(() => {
 		const total = expenses
@@ -91,11 +155,57 @@
 			}
 
 			await loadExpenses();
+			await loadBudgetData();
+			const interval = setInterval(fetchDailyExpenses, 300000);
+			return () => clearInterval(interval);
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
 		}
 	});
+
+	async function loadBudgetData() {
+		isLoading = true;
+		errorMessage = '';
+		try {
+			const [budgetRes, dailyRes, monthlyRes] = await Promise.all([
+				fetch('api/budget-planner', { headers: await getAuthHeaders() }),
+				fetch('/api/expenses/daily'),
+				fetch('/api/expenses/monthly')
+			]);
+
+			if (!budgetRes.ok) throw new Error(await budgetRes.text());
+
+			const data = await budgetRes.json();
+			const { total: dailyTotal } = await dailyRes.json();
+			const monthlyData = await monthlyRes.json();
+
+			if (data && data.length > 0) {
+				const budget = data[0];
+				originalBudgetData = budget;
+				total_budget = budget.total_budget;
+				daily_limit = budget.daily_limit;
+				daily_spent = dailyTotal || 0;
+				categorySpending = monthlyData || {};
+
+				const monthlyTotal = Object.values(monthlyData).reduce((sum, val) => sum + val, 0);
+				totalSpent.set(monthlyTotal);
+
+				category_budgets = [
+					{ category: 'food_budget', amount: budget.food_budget, id: 1 },
+					{ category: 'transportation_budget', amount: budget.transportation_budget, id: 2 },
+					{ category: 'utilities_budget', amount: budget.utilities_budget, id: 3 },
+					{ category: 'entertainment_budget', amount: budget.entertainment_budget, id: 4 },
+					{ category: 'others_budget', amount: budget.others_budget, id: 5 }
+				].filter((item) => item.amount > 0);
+			}
+		} catch (error) {
+			console.error('Error loading data:', error);
+			errorMessage = 'Failed to load data';
+		} finally {
+			isLoading = false;
+		}
+	}
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -294,7 +404,17 @@
 
 		<div
 			class="my-auto flex h-[40%] flex-col items-center justify-center overflow-hidden rounded-xl bg-white shadow-xl"
-		></div>
+		>
+			<CategoryBudget
+				{category_budgets}
+				{categories}
+				{categorySpending}
+				{isEditMode}
+				{removeBudget}
+				{getCategoryColor}
+				isOnPage={false}
+			/>
+		</div>
 	</div>
 
 	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white">
