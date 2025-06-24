@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import ExpenseModal from '../../components/ExpenseModal.svelte';
 	import Chart from '../../components/Chart.svelte';
-	import { writable } from 'svelte/store';
+	import { totalSpent } from '../stores';
 
 	let expenses = $state([]);
 	let expense_amount = $state('');
@@ -13,7 +13,14 @@
 	let errorMessage = $state('');
 	let isLoading = $state(false);
 	let expensesList = $state(null);
-	let total_spent = writable(0);
+
+	$effect(() => {
+		const total = expenses
+			.reduce((sum, expense) => sum + Number(expense.expense_amount), 0)
+			.toFixed(2);
+
+		$totalSpent = total;
+	});
 
 	let showModal = $state(false);
 	let editingExpenses = $state(null);
@@ -357,10 +364,7 @@
 							{/each}
 						</ul>
 						<h1 class="text-center text-xl font-bold text-green-600">
-							TOTAL MONEY SPENT TODAY: ₱
-							{expenses
-								.reduce((total, expense) => total + Number(expense.expense_amount), 0)
-								.toFixed(2)}
+							TOTAL MONEY SPENT TODAY: ₱ {$totalSpent}
 						</h1>
 					</div>
 				{/if}

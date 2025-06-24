@@ -4,6 +4,7 @@
 	import SideNav from '../../components/Sidenav.svelte';
 	import { fade, slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
+	import { totalSpent } from '../stores';
 
 	let budget_plan = $state([]);
 	let errorMessage = $state('');
@@ -28,9 +29,10 @@
 		{ name: 'others_budget', label: 'Other' }
 	];
 
-	function calculateRemainingBudget() {
-		remaining_budget = total_budget;
-	}
+	// function calculateRemainingBudget() {
+	// 	remaining_budget = total_budget - $totalSpent;
+
+	// }
 
 	function setMonthlyBudget() {
 		if (total_budget > 0) has_data = true;
@@ -666,7 +668,7 @@
 					<div transition:slide class="mb-4 rounded-lg bg-gray-50 p-4">
 						<div class="flex items-center justify-between">
 							<span class="font-semibold">Total Remaining</span>
-							<span class="font-semibold">₱{remaining_budget.toLocaleString()}</span>
+							<span class="font-semibold">₱{total_budget - $totalSpent}</span>
 						</div>
 						<div class="mt-1 flex items-center justify-between text-xs">
 							<span class="text-gray-600">Daily average available:</span>
