@@ -10,7 +10,7 @@
 	let budget_plan = $state([]);
 	let errorMessage = $state('');
 	let daily_limit = $state('');
-	let daily_spent = $state('');
+	let daily_spent = $state(0);
 	let total_budget = $state('');
 	let remaining_budget = $state(0);
 	let category_budgets = $state([]);
@@ -21,14 +21,37 @@
 	let hasExistingBudget = $state(false);
 	let isEditMode = $state(false);
 	let originalBudgetData = $state(null);
+	let categorySpending = $state({});
 
 	let categories = [
 		{ name: 'food_budget', label: 'Food' },
 		{ name: 'transportation_budget', label: 'Transportation' },
 		{ name: 'utilities_budget', label: 'Utilities' },
 		{ name: 'entertainment_budget', label: 'Entertainment' },
-		{ name: 'others_budget', label: 'Other' }
+		{ name: 'others_budget', label: 'Others' }
 	];
+
+	async function fetchDailyExpenses() {
+		try {
+			const res = await fetch('/api/expenses/daily');
+			if (!res.ok) throw new Error('Failed to fetch daily expenses');
+			const { total } = await res.json();
+			daily_spent = total || 0;
+		} catch (err) {
+			console.error('Daily expenses fetch error:', err);
+		}
+	}
+
+	// New function to fetch monthly category expenses
+	async function fetchMonthlyCategoryExpenses() {
+		try {
+			const res = await fetch('/api/expenses/monthly');
+			if (!res.ok) throw new Error('Failed to fetch monthly expenses');
+			categorySpending = await res.json();
+		} catch (err) {
+			console.error('Monthly expenses fetch error:', err);
+		}
+	}
 
 	function setMonthlyBudget() {
 		if (total_budget > 0) has_data = true;
@@ -158,6 +181,9 @@
 			}
 
 			await loadBudgetData();
+			// Set up periodic refresh (every 5 minutes)
+			const interval = setInterval(fetchDailyExpenses, 300000);
+			return () => clearInterval(interval);
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
@@ -176,24 +202,25 @@
 		isLoading = true;
 		errorMessage = '';
 		try {
-			const res = await fetch('api/budget-planner', {
-				headers: await getAuthHeaders()
-			});
+			const [budgetRes, dailyRes, monthlyRes] = await Promise.all([
+				fetch('api/budget-planner', { headers: await getAuthHeaders() }),
+				fetch('/api/expenses/daily'),
+				fetch('/api/expenses/monthly')
+			]);
 
-			if (!res.ok) {
-				const err = await res.json();
-				errorMessage = err.error || 'Failed to load budget';
-				return;
-			}
+			if (!budgetRes.ok) throw new Error(await budgetRes.text());
 
-			const data = await res.json();
+			const data = await budgetRes.json();
+			const { total: dailyTotal } = await dailyRes.json();
+			const monthlyData = await monthlyRes.json();
 
 			if (data && data.length > 0) {
 				const budget = data[0];
 				originalBudgetData = budget;
-
 				total_budget = budget.total_budget;
 				daily_limit = budget.daily_limit;
+				daily_spent = dailyTotal || 0;
+				categorySpending = monthlyData || {};
 
 				category_budgets = [
 					{ category: 'food_budget', amount: budget.food_budget, id: 1 },
@@ -207,8 +234,8 @@
 				has_data = true;
 			}
 		} catch (error) {
-			console.error('Error loading budget:', error);
-			errorMessage = 'Network error';
+			console.error('Error loading data:', error);
+			errorMessage = 'Failed to load data';
 		} finally {
 			isLoading = false;
 		}
@@ -393,7 +420,7 @@
 		<div class="flex h-full flex-col">
 			<h2 class="mb-4 text-xl font-bold">Budget Summary</h2>
 
-			<!-- Fixed Top Section (Outside Scroll) -->
+			<!-- Fixed Top Section -->
 			<div class="sticky top-0 z-10 bg-white pb-4">
 				{#if has_data}
 					<!-- Monthly Budget Summary -->
@@ -415,22 +442,23 @@
 						</div>
 					</div>
 
-					<!-- Daily Spending Limit Summary -->
+					<!-- Daily Spending Limit Summary - UPDATED -->
 					<div transition:slide class="mb-4 rounded-lg bg-gray-50 p-4">
 						<div class="mb-1 flex items-center justify-between">
 							<span class="font-medium">Daily Spending Tracker</span>
-							<span class="font-medium">₱{daily_limit.toLocaleString()}</span>
+							<span class="font-medium">
+								₱{(daily_limit - daily_spent).toLocaleString()}
+								<span class="text-sm text-gray-500">
+									({Math.max(0, Math.round(100 - (daily_spent / daily_limit) * 100))}% Left)
+								</span>
+							</span>
 						</div>
 						<div class="h-2.5 w-full rounded-full bg-gray-200">
 							<div
 								class="h-2.5 rounded-full bg-green-600"
-								style="width: {((daily_limit - daily_spent) / daily_limit) * 100}%"
+								style={`width: ${Math.max(0, 100 - (daily_spent / daily_limit) * 100)}%`}
 							></div>
 						</div>
-					</div>
-				{:else}
-					<div class="flex h-40 items-center justify-center text-gray-400">
-						Start adding your budget plan
 					</div>
 				{/if}
 			</div>
@@ -438,7 +466,6 @@
 			<!-- Scrollable Content Area -->
 			<div class="flex-1 overflow-y-auto">
 				{#if has_data}
-					<!-- Compact Category Breakdown -->
 					<div class="space-y-3">
 						{#each category_budgets as item (item.id)}
 							<div transition:fade class="rounded-lg border border-gray-200 p-3">
@@ -446,7 +473,13 @@
 									<span>{categories.find((c) => c.name === item.category)?.label}</span>
 									<div class="flex items-center">
 										<span class="mr-2 font-medium">
-											₱{item.amount.toLocaleString()} remaining (of ₱{item.amount.toLocaleString()})
+											₱{Math.max(
+												0,
+												item.amount - (categorySpending[item.category] || 0)
+											).toLocaleString()}
+											<span class="text-xs text-gray-500">
+												(of ₱{item.amount.toLocaleString()})
+											</span>
 										</span>
 										{#if isEditMode}
 											<button
@@ -475,7 +508,10 @@
 								<div class="h-2 w-full rounded-full bg-gray-200">
 									<div
 										class="h-2 rounded-full {getCategoryColor(item.category)}"
-										style="width: 100%"
+										style="width: {Math.max(
+											0,
+											100 - ((categorySpending[item.category] || 0) / item.amount) * 100
+										)}%"
 									></div>
 								</div>
 							</div>
