@@ -405,19 +405,21 @@
 			</div>
 		</div>
 
-		<div
+		<a
+			href="/budget-planner"
 			class="my-auto flex h-[40%] flex-col items-center justify-center overflow-hidden rounded-xl bg-white shadow-xl"
-		>
-			<CategoryBudget
-				{category_budgets}
-				{categories}
-				{categorySpending}
-				{isEditMode}
-				{removeBudget}
-				{getCategoryColor}
-				isOnPage={false}
-			/>
-		</div>
+			><div class="h-full w-full">
+				<CategoryBudget
+					{category_budgets}
+					{categories}
+					{categorySpending}
+					{isEditMode}
+					{removeBudget}
+					{getCategoryColor}
+					isOnPage={false}
+				/>
+			</div>
+		</a>
 	</div>
 
 	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white">
