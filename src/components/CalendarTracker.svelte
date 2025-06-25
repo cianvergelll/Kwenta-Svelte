@@ -1,9 +1,12 @@
 <script>
+	import { onMount } from 'svelte';
+
 	let days_remaining_in_month = $state(0);
 	let currentDate = $state(new Date());
 	let selectedDate = $state(null);
 	let showMonthPicker = $state(false);
 	let showYearPicker = $state(false);
+	let dailyStatuses = $state({});
 
 	const years = Array.from({ length: 20 }, (_, i) => new Date().getFullYear() - 10 + i);
 	const months = [
@@ -21,6 +24,44 @@
 		'December'
 	];
 
+	// Fetch status when month changes
+	$effect(() => {
+		fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
+	});
+
+	async function fetchDailyStatus(month, year) {
+		try {
+			const res = await fetch(`/api/daily-status?month=${month}&year=${year}`);
+			if (res.ok) {
+				const data = await res.json();
+				dailyStatuses = data.reduce((acc, item) => {
+					const dateStr = new Date(item.date).toISOString().split('T')[0];
+					acc[dateStr] = item.status;
+					return acc;
+				}, {});
+			}
+		} catch (err) {
+			console.error('Error fetching daily status:', err);
+		}
+	}
+
+	function getStatusColor(date) {
+		const dateStr = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1)
+			.toString()
+			.padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+
+		const status = dailyStatuses[dateStr];
+
+		return (
+			{
+				on_track: 'bg-green-500',
+				caution: 'bg-yellow-500',
+				overspending: 'bg-red-500'
+			}[status] || 'bg-gray-300'
+		);
+	}
+
+	// Existing calendar functions (prevMonth, nextMonth, etc.)
 	function getDaysInMonth(year, month) {
 		return new Date(year, month + 1, 0).getDate();
 	}
@@ -84,9 +125,9 @@
 			<span class="text-xs">Overspending</span>
 		</div>
 	</div>
+
 	<div class="calendar-header mb-4 flex items-center justify-between">
 		<button onclick={prevMonth} class="rounded p-1 hover:bg-gray-200"> &lt; </button>
-
 		<div class="flex items-center space-x-2">
 			<div class="relative">
 				<button onclick={toggleMonthPicker} class="rounded px-2 py-1 font-medium hover:bg-gray-200">
@@ -109,7 +150,6 @@
 					</div>
 				{/if}
 			</div>
-
 			<div class="relative">
 				<button onclick={toggleYearPicker} class="rounded px-2 py-1 font-medium hover:bg-gray-200">
 					{currentDate.getFullYear()}
@@ -133,7 +173,6 @@
 				{/if}
 			</div>
 		</div>
-
 		<button onclick={nextMonth} class="rounded p-1 hover:bg-gray-200"> &gt; </button>
 	</div>
 
@@ -164,14 +203,18 @@
 				new Date().getDate() === date &&
 				new Date().getMonth() === currentDate.getMonth() &&
 				new Date().getFullYear() === currentDate.getFullYear()}
-			<button
-				onclick={() => selectDate(date)}
-				class="h-8 w-8 rounded-full text-center hover:bg-blue-100 {isSelected
-					? 'bg-blue-500 text-white'
-					: ''} {isToday ? 'border border-blue-500' : ''}"
-			>
-				{date}
-			</button>
+
+			<div class="flex flex-col items-center">
+				<button
+					onclick={() => selectDate(date)}
+					class="h-8 w-8 rounded-full text-center hover:bg-blue-100 {isSelected
+						? 'bg-blue-500 text-white'
+						: ''} {isToday ? 'border border-blue-500' : ''}"
+				>
+					{date}
+				</button>
+				<div class={`mt-1 h-2 w-2 rounded-full ${getStatusColor(date)}`}></div>
+			</div>
 		{/each}
 	</div>
 </div>

@@ -8,9 +8,10 @@
 	import CalendarTracker from '../../components/CalendarTracker.svelte';
 	import CategoryBudget from '../../components/CategoryBudget.svelte';
 
+	// State variables
 	let budget_plan = $state([]);
 	let errorMessage = $state('');
-	let daily_limit = $state('');
+	let daily_limit = $state(0);
 	let daily_spent = $state(0);
 	let total_budget = $state('');
 	let remaining_budget = $state(0);
@@ -24,14 +25,46 @@
 	let originalBudgetData = $state(null);
 	let categorySpending = $state({});
 	let isOnPage = $state(true);
+	let currentDate = $state(new Date());
 
-	let categories = [
+	const categories = [
 		{ name: 'food_budget', label: 'Food' },
 		{ name: 'transportation_budget', label: 'Transportation' },
 		{ name: 'utilities_budget', label: 'Utilities' },
 		{ name: 'entertainment_budget', label: 'Entertainment' },
 		{ name: 'others_budget', label: 'Others' }
 	];
+
+	// Helper functions
+	function getCategoryColor(category) {
+		switch (category) {
+			case 'utilities_budget':
+				return 'bg-gradient-to-r from-blue-500 to-blue-800';
+			case 'food_budget':
+				return 'bg-gradient-to-r from-pink-500 to-pink-800';
+			case 'transportation_budget':
+				return 'bg-gradient-to-r from-yellow-500 to-yellow-800';
+			case 'entertainment_budget':
+				return 'bg-gradient-to-r from-purple-500 to-purple-800';
+			case 'others_budget':
+				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			default:
+				return 'bg-gray-50';
+		}
+	}
+
+	async function getAuthHeaders() {
+		const token = localStorage.getItem('sessionToken');
+		return {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		};
+	}
+
+	// Data fetching functions
+	async function fetchDailyStatus(month, year) {
+		// Implementation depends on your API
+	}
 
 	async function fetchDailyExpenses() {
 		try {
@@ -44,7 +77,6 @@
 		}
 	}
 
-	// New function to fetch monthly category expenses
 	async function fetchMonthlyCategoryExpenses() {
 		try {
 			const res = await fetch('/api/expenses/monthly');
@@ -55,6 +87,7 @@
 		}
 	}
 
+	// Budget functions
 	function setMonthlyBudget() {
 		if (total_budget > 0) has_data = true;
 	}
@@ -69,7 +102,6 @@
 			return;
 		}
 
-		// Check if category already has a budget
 		if (category_budgets.some((item) => item.category === selected_category)) {
 			errorMessage = `You already have a budget for ${categories.find((c) => c.name === selected_category).label}`;
 			return;
@@ -118,86 +150,36 @@
 				},
 				{ category: 'others_budget', amount: originalBudgetData.others_budget, id: 5 }
 			].filter((item) => item.amount > 0);
-		} else {
-			// Clear input fields when entering edit mode
-			category_amount = 0;
 		}
 	}
 
-	async function updateBudget() {
-		errorMessage = '';
+	async function updateDailyStatus() {
+		if (daily_limit === undefined || daily_spent === undefined) return;
 
-		const budgetData = {
-			total_budget: Number(total_budget) || 0,
-			daily_limit: Number(daily_limit) || 0,
-			food_budget: 0,
-			transportation_budget: 0,
-			utilities_budget: 0,
-			entertainment_budget: 0,
-			others_budget: 0
-		};
-
-		category_budgets.forEach((item) => {
-			budgetData[item.category] = Number(item.amount) || 0;
-		});
+		const today = new Date().toISOString().split('T')[0];
+		const amount_spent = daily_spent;
+		const dailyLimit = daily_limit;
 
 		try {
-			const res = await fetch('api/budget-planner', {
-				method: 'PUT',
-				headers: await getAuthHeaders(),
-				body: JSON.stringify(budgetData)
+			const res = await fetch('/api/daily-status', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${localStorage.getItem('sessionToken')}`
+				},
+				body: JSON.stringify({
+					date: today,
+					amount_spent,
+					daily_limit: dailyLimit
+				})
 			});
 
-			if (!res.ok) {
-				const err = await res.json();
-				errorMessage = err.error || 'Failed to update budget';
-				return;
+			if (res.ok) {
+				fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
 			}
-
-			// Update our original data and exit edit mode
-			originalBudgetData = budgetData;
-			hasExistingBudget = true;
-			isEditMode = false;
-		} catch (error) {
-			console.error('Error updating budget:', error);
-			errorMessage = 'Failed to update budget';
+		} catch (err) {
+			console.error('Error updating daily status:', err);
 		}
-	}
-
-	onMount(async () => {
-		const token = localStorage.getItem('sessionToken');
-		if (!token) {
-			goto('/login');
-			return;
-		}
-
-		try {
-			const res = await fetch('/api/auth/verify', {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-
-			if (!res.ok) {
-				localStorage.removeItem('sessionToken');
-				goto('/login');
-				return;
-			}
-
-			await loadBudgetData();
-			// Set up periodic refresh (every 5 minutes)
-			const interval = setInterval(fetchDailyExpenses, 300000);
-			return () => clearInterval(interval);
-		} catch (error) {
-			console.error('Session verification failed:', error);
-			goto('/login');
-		}
-	});
-
-	async function getAuthHeaders() {
-		const token = localStorage.getItem('sessionToken');
-		return {
-			'Content-Type': 'application/json',
-			Authorization: `Bearer ${token}`
-		};
 	}
 
 	async function loadBudgetData() {
@@ -285,23 +267,79 @@
 		}
 	}
 
-	// Helper function to get gradient class based on category
-	function getCategoryColor(category) {
-		switch (category) {
-			case 'utilities_budget':
-				return 'bg-gradient-to-r from-blue-500 to-blue-800';
-			case 'food_budget':
-				return 'bg-gradient-to-r from-pink-500 to-pink-800';
-			case 'transportation_budget':
-				return 'bg-gradient-to-r from-yellow-500 to-yellow-800';
-			case 'entertainment_budget':
-				return 'bg-gradient-to-r from-purple-500 to-purple-800';
-			case 'others_budget':
-				return 'bg-gradient-to-r from-gray-400 to-gray-700';
-			default:
-				return 'bg-gray-50';
+	async function updateBudget() {
+		errorMessage = '';
+
+		const budgetData = {
+			total_budget: Number(total_budget) || 0,
+			daily_limit: Number(daily_limit) || 0,
+			food_budget: 0,
+			transportation_budget: 0,
+			utilities_budget: 0,
+			entertainment_budget: 0,
+			others_budget: 0
+		};
+
+		category_budgets.forEach((item) => {
+			budgetData[item.category] = Number(item.amount) || 0;
+		});
+
+		try {
+			const res = await fetch('api/budget-planner', {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify(budgetData)
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to update budget';
+				return;
+			}
+
+			originalBudgetData = budgetData;
+			hasExistingBudget = true;
+			isEditMode = false;
+		} catch (error) {
+			console.error('Error updating budget:', error);
+			errorMessage = 'Failed to update budget';
 		}
 	}
+
+	// Lifecycle
+	onMount(async () => {
+		const token = localStorage.getItem('sessionToken');
+		if (!token) {
+			goto('/login');
+			return;
+		}
+
+		try {
+			const res = await fetch('/api/auth/verify', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+
+			if (!res.ok) {
+				localStorage.removeItem('sessionToken');
+				goto('/login');
+				return;
+			}
+
+			await loadBudgetData();
+			const interval = setInterval(fetchDailyExpenses, 300000);
+			return () => clearInterval(interval);
+		} catch (error) {
+			console.error('Session verification failed:', error);
+			goto('/login');
+		}
+	});
+
+	// Effects
+	$effect(() => {
+		if (isOnPage && daily_spent > 0 && daily_limit !== undefined) {
+			updateDailyStatus();
+		}
+	});
 </script>
 
 <div class="flex h-screen w-screen items-center justify-start bg-gray-100">
