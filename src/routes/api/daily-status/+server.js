@@ -36,16 +36,31 @@ export async function POST({ request, locals }) {
         return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { date, amount_spent, daily_limit } = await request.json();
+    let { date, amount_spent, daily_limit } = await request.json();
+
+    // Ensure the date is in YYYY-MM-DD format
+    if (date && typeof date === 'string') {
+        date = new Date(date).toISOString().split('T')[0];
+    } else if (!date) {
+        // Default to today if no date provided
+        date = new Date().toISOString().split('T')[0];
+    }
 
     try {
         await pool.query(
-            `INSERT INTO daily_status (user_id, date, amount_spent, daily_limit)
-             VALUES (?, ?, ?, ?)
+            `INSERT INTO daily_status (user_id, date, amount_spent, daily_limit, status)
+             VALUES (?, ?, ?, ?, 
+                CASE 
+                    WHEN ? <= ? * 0.8 THEN 'on_track'
+                    WHEN ? <= ? THEN 'caution'
+                    ELSE 'overspending'
+                END)
              ON DUPLICATE KEY UPDATE
-               amount_spent = VALUES(amount_spent),
-               daily_limit = VALUES(daily_limit)`,
-            [locals.user.id, date, amount_spent, daily_limit]
+                amount_spent = VALUES(amount_spent),
+                daily_limit = VALUES(daily_limit),
+                status = VALUES(status)`,
+            [locals.user.id, date, amount_spent, daily_limit,
+                amount_spent, daily_limit, amount_spent, daily_limit]
         );
 
         return json({ success: true });

@@ -29,26 +29,10 @@
 		fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
 	});
 
-	async function fetchDailyStatus(month, year) {
-		try {
-			const res = await fetch(`/api/daily-status?month=${month}&year=${year}`);
-			if (res.ok) {
-				const data = await res.json();
-				dailyStatuses = data.reduce((acc, item) => {
-					const dateStr = new Date(item.date).toISOString().split('T')[0];
-					acc[dateStr] = item.status;
-					return acc;
-				}, {});
-			}
-		} catch (err) {
-			console.error('Error fetching daily status:', err);
-		}
-	}
-
 	function getStatusColor(date) {
-		const dateStr = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1)
-			.toString()
-			.padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+		const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), date)
+			.toISOString()
+			.split('T')[0];
 
 		const status = dailyStatuses[dateStr];
 
@@ -59,6 +43,24 @@
 				overspending: 'bg-red-500'
 			}[status] || 'bg-gray-300'
 		);
+	}
+
+	// Make sure your fetch function uses proper date formatting
+	async function fetchDailyStatus(month, year) {
+		try {
+			const res = await fetch(`/api/daily-status?month=${month}&year=${year}`);
+			if (res.ok) {
+				const data = await res.json();
+				dailyStatuses = data.reduce((acc, item) => {
+					// Ensure consistent date formatting
+					const dateStr = new Date(item.date).toISOString().split('T')[0];
+					acc[dateStr] = item.status;
+					return acc;
+				}, {});
+			}
+		} catch (err) {
+			console.error('Error fetching daily status:', err);
+		}
 	}
 
 	// Existing calendar functions (prevMonth, nextMonth, etc.)
@@ -108,6 +110,12 @@
 		showMonthPicker = false;
 		showYearPicker = false;
 	}
+	async function refreshData() {
+		await fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
+	}
+
+	// Expose the refresh function to parent components
+	export { refreshData };
 </script>
 
 <div class="calendar-container">

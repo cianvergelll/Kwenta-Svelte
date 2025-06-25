@@ -153,6 +153,8 @@
 		}
 	}
 
+	let calendarRef = $state(null);
+
 	async function updateDailyStatus() {
 		if (daily_limit === undefined || daily_spent === undefined) return;
 
@@ -175,7 +177,8 @@
 			});
 
 			if (res.ok) {
-				fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
+				// Refresh the calendar data after update
+				calendarRef?.refreshData();
 			}
 		} catch (err) {
 			console.error('Error updating daily status:', err);
@@ -454,7 +457,7 @@
 		<div
 			class="mx-auto my-5 h-[50%] w-[95%] overflow-y-auto rounded-2xl border border-gray-300 p-4"
 		>
-			<CalendarTracker />
+			<CalendarTracker bind:this={calendarRef} />
 		</div>
 	</div>
 
