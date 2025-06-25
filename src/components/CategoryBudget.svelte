@@ -76,7 +76,7 @@
 							{Math.max(
 								0,
 								100 - Math.round(((categorySpending[item.category] || 0) / item.amount) * 100)
-							)}%
+							)}% remaining
 						</span>
 					</div>
 					<div class="h-1 w-full rounded-full bg-gray-200">

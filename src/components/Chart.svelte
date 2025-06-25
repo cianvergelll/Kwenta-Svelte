@@ -125,10 +125,10 @@
 	});
 </script>
 
-<div class="rounded-xl bg-white p-4">
+<div class="rounded-xl bg-white p-10">
 	<div class="mb-4 flex items-center justify-between">
 		<h2 class="text-xl font-semibold text-green-700">{title}</h2>
-		{#if onReload}
+		<!-- {#if onReload}
 			<button
 				onclick={onReload}
 				class="rounded bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
@@ -136,10 +136,10 @@
 			>
 				Reload
 			</button>
-		{/if}
+		{/if} -->
 	</div>
 
-	<div class="h-64 w-full">
+	<div class="h-64 w-full border border-gray-300">
 		<canvas bind:this={canvas}></canvas>
 	</div>
 </div>
