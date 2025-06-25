@@ -295,7 +295,7 @@
 							<!-- Left side (Check icon) -->
 							<div class="flex w-1/6 items-center">
 								<div class="text-green-600">
-									<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<svg class="ml-2 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<circle cx="12" cy="12" r="10" stroke-width="2" />
 										<path
 											stroke-linecap="round"
@@ -350,7 +350,7 @@
 
 								<!-- Delete -->
 								<button aria-label="Delete" class="ml-2 text-red-600 hover:text-red-800">
-									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path
 											stroke-linecap="round"
 											stroke-linejoin="round"
