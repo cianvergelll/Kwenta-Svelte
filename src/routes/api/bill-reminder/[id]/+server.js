@@ -41,6 +41,6 @@ export async function DELETE({ params, locals }) {
         headers: { 'Content-Type': 'application/json' }
     });
 
-    await pool.query('DELETE FROM bills_reminder WHERE bill_id = ? AND user_id = ?', [params.id, locals.user.id]);
+    await pool.query('DELETE FROM bills_reminder WHERE id = ? AND user_id = ?', [params.id, locals.user.id]);
     return new Response(JSON.stringify({ message: 'Deleted' }));
 }

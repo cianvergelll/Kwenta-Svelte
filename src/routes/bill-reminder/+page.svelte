@@ -12,6 +12,8 @@
 	let paid_date = $state('');
 	let isLoading = $state(false);
 	let errorMessage = $state('');
+	let paidBills = $state([]);
+	let unpaidBills = $state([]);
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -36,11 +38,41 @@
 			}
 
 			bills = await res.json();
+
+			console.log(bills);
+			unpaidBills = bills.filter((bill) => !bill.isPaid);
+			paidBills = bills.filter((bill) => bill.isPaid);
 		} catch (error) {
 			console.error('Error loading bills:', error);
 			errorMessage = 'Network error';
 		} finally {
 			isLoading = false;
+		}
+	}
+
+	async function markAsPaid(bill) {
+		try {
+			const res = await fetch(`/api/bill-reminder/${bill.id}`, {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					...bill,
+					isPaid: true,
+					paid_date: new Date().toISOString()
+				})
+			});
+
+			if (res.ok) {
+				// // Animate the transition
+				// const billElement = document.getElementById(`${id}`);
+				// if (billElement) {
+				// 	billElement.classList.add('fade-out');
+				// 	setTimeout(() => loadBills(), 300);
+				// }
+			}
+			await loadBills();
+		} catch (error) {
+			console.error('Error marking bill as paid:', error);
 		}
 	}
 
@@ -235,7 +267,20 @@
 			</div>
 
 			<!-- Right Panel (Placeholder) -->
-			<div class="h-full w-1/2 rounded-lg border border-gray-300 bg-white p-4 shadow-sm"></div>
+			<div class="h-full w-1/2 rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+				<h2 class="mb-4 text-lg font-semibold text-green-800">PAID BILLS</h2>
+				{#each paidBills as bill}
+					<div class="mb-2 border-b p-2">
+						<div class="flex justify-between">
+							<span>{bill.bill_title}</span>
+							<span>₱{bill.bill_amount}</span>
+						</div>
+						<div class="text-sm text-gray-500">
+							Paid on {formatDate(bill.paid_date)}
+						</div>
+					</div>
+				{/each}
+			</div>
 		</div>
 
 		<!-- Display -->
@@ -298,7 +343,12 @@
 							class="flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-sm"
 						>
 							<!-- Left side (Check icon) -->
-							<div class="flex w-1/6 items-center">
+							<button
+								type="button"
+								class="flex w-1/6 items-center focus:outline-none"
+								aria-label="Mark as paid"
+								onclick={() => markAsPaid(bill)}
+							>
 								<div class="text-green-600">
 									<svg class="ml-2 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<circle cx="12" cy="12" r="10" stroke-width="2" />
@@ -310,7 +360,7 @@
 										/>
 									</svg>
 								</div>
-							</div>
+							</button>
 
 							<!-- Centered content -->
 							<div class="flex w-4/6 items-center justify-between">
@@ -357,7 +407,7 @@
 								<button
 									aria-label="Delete"
 									class="ml-2 text-red-600 hover:text-red-800"
-									onclick={() => deleteBill(bill.bill_id)}
+									onclick={() => deleteBill(bill.id)}
 								>
 									<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path
@@ -376,3 +426,13 @@
 		</div>
 	</div>
 </div>
+
+<!-- <style>
+	.fade-out {
+		opacity: 0;
+		transform: translateX(20px);
+		transition:
+			opacity 0.3s ease,
+			transform 0.3s ease;
+	}
+</style> -->
