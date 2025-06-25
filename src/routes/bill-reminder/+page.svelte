@@ -3,11 +3,15 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
-	let bill_title = '';
-	let bill_amount = '';
-	let bill_date = '';
-	let recurring_bill = false;
-	let isPaid = false;
+	let bills = $state([]);
+	let bill_title = $state('');
+	let bill_amount = $state('');
+	let due_date = $state('');
+	let recurring_bill = $state(false);
+	let isPaid = $state(false);
+	let paid_date = $state('');
+	let isLoading = $state(false);
+	let errorMessage = $state('');
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -15,6 +19,86 @@
 			'Content-Type': 'application/json',
 			Authorization: `Bearer ${token}`
 		};
+	}
+
+	async function loadBills() {
+		isLoading = true;
+		errorMessage = '';
+		try {
+			const res = await fetch('/api/bill-reminder', {
+				headers: await getAuthHeaders()
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to load bill';
+				return;
+			}
+
+			bills = await res.json();
+		} catch (error) {
+			console.error('Error loading bills:', error);
+			errorMessage = 'Network error';
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	async function addBill() {
+		errorMessage = '';
+		try {
+			const res = await fetch('/api/bill-reminder', {
+				method: 'POST',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					bill_title,
+					bill_amount,
+					due_date,
+					recurring_bill,
+					isPaid,
+					paid_date
+				})
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to add bill';
+				return;
+			}
+
+			bill_title = '';
+			bill_amount = '';
+			due_date = '';
+			recurring_bill = false;
+			isPaid = false;
+			paid_date = '';
+			await loadBills();
+		} catch (error) {
+			console.error('Error adding bills:', error);
+			errorMessage = 'Network error';
+		}
+	}
+
+	async function deleteBill(id) {
+		if (!confirm('Are you sure you want to delete this Bill?')) return;
+
+		try {
+			const res = await fetch(`/api/bill-reminder/${id}`, {
+				method: 'DELETE',
+				headers: await getAuthHeaders()
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to delete bill';
+				return;
+			}
+
+			await loadBills();
+		} catch (error) {
+			console.error('Error deleting bill:', error);
+			errorMessage = 'Network error';
+		}
 	}
 
 	onMount(async () => {
@@ -33,21 +117,13 @@
 				localStorage.removeItem('sessionToken');
 				goto('/login');
 			}
+
+			await loadBills();
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
 		}
 	});
-
-	function addBill(event) {
-		event.preventDefault();
-		console.log('Bill Added:', {
-			title: bill_title,
-			amount: bill_amount,
-			date: bill_date,
-			recurring: recurring_bill
-		});
-	}
 </script>
 
 <div class="flex h-screen w-screen bg-gray-100">
@@ -70,7 +146,7 @@
 						BILLS REMINDER
 					</h2>
 
-					<form on:submit={addBill} class="flex h-full flex-col gap-4 p-6">
+					<form onsubmit={addBill} class="flex h-full flex-col gap-4 p-6">
 						<!-- Title Input -->
 						<input
 							type="text"
@@ -98,7 +174,7 @@
 							<!-- Due Date Dropdown -->
 							<input
 								type="date"
-								bind:value={bill_date}
+								bind:value={due_date}
 								class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-green-400 focus:outline-none"
 								required
 							/>
@@ -129,7 +205,6 @@
 							</label>
 						</div>
 
-						<!-- Add Reminder Button - Pushed to bottom with mt-auto -->
 						<button
 							type="submit"
 							class="mt-auto flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
@@ -158,7 +233,137 @@
 			<div class="h-full w-1/2 rounded-lg border border-gray-300 bg-white p-4 shadow-sm"></div>
 		</div>
 
-		<!-- Bottom Full Width Section -->
-		<div class="h-[50%] w-full rounded-lg border border-gray-300 bg-white p-4 shadow-sm"></div>
+		<!-- Display -->
+		<div class="h-[50%] w-full rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-lg font-semibold text-green-800">BILLS TO BE PAID</h2>
+				<button
+					class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+				>
+					Sort According to
+					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M19 9l-7 7-7-7"
+						/>
+					</svg>
+				</button>
+			</div>
+
+			<!-- Bill Header -->
+			<div class="mb-2">
+				<!-- Header Row -->
+				<div
+					class="flex items-center justify-between rounded-xl bg-green-100 px-3 py-2 font-semibold"
+				>
+					<!-- Left side (empty space to align with checkbox) -->
+					<div class="flex w-1/6 items-center">
+						<span class="text-green-600">Status</span>
+					</div>
+
+					<!-- Centered content -->
+					<div class="flex w-4/6 items-center justify-between">
+						<!-- Bill Title Header -->
+						<div class="w-1/3 text-center text-green-800">BILL TITLE</div>
+
+						<!-- Due Date Header -->
+						<div class="w-1/3 text-center text-green-800">DUE DATE</div>
+
+						<!-- Amount Header -->
+						<div class="w-1/3 text-center text-green-800">AMOUNT</div>
+					</div>
+
+					<!-- Right side (empty space to align with buttons) -->
+					<div class="flex w-1/6 justify-end">
+						<span class="text-green-800">ACTIONS</span>
+					</div>
+				</div>
+			</div>
+
+			{#if isLoading && bills.length === 0}
+				<div class="py-8 text-center">Loading bills...</div>
+			{:else}
+				{#each bills as bill}
+					<!-- Bill Item -->
+					<div class="mb-2 space-y-3">
+						<!-- Row Start -->
+						<div
+							class="flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-sm"
+						>
+							<!-- Left side (Check icon) -->
+							<div class="flex w-1/6 items-center">
+								<div class="text-green-600">
+									<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<circle cx="12" cy="12" r="10" stroke-width="2" />
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M9 12l2 2 4-4"
+										/>
+									</svg>
+								</div>
+							</div>
+
+							<!-- Centered content -->
+							<div class="flex w-4/6 items-center justify-between">
+								<!-- Bill Title -->
+								<input
+									type="text"
+									value={bill.bill_title}
+									class="w-1/3 rounded-full border-none bg-white px-3 py-2 text-center text-sm font-semibold uppercase outline-none"
+									readonly
+								/>
+
+								<!-- Due Date -->
+								<input
+									type="text"
+									value={bill.due_date}
+									class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm outline-none"
+									readonly
+								/>
+
+								<!-- Amount -->
+								<input
+									type="text"
+									value={bill.bill_amount}
+									class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm font-semibold outline-none"
+									readonly
+								/>
+							</div>
+
+							<!-- Right side (Buttons) -->
+							<div class="flex w-1/6 justify-end">
+								<!-- Edit -->
+								<button aria-label="Edit" class="ml-2 text-green-600 hover:text-green-800">
+									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M11 5h2M5 19h14M16 3l5 5-11 11H5v-5L16 3z"
+										/>
+									</svg>
+								</button>
+
+								<!-- Delete -->
+								<button aria-label="Delete" class="ml-2 text-red-600 hover:text-red-800">
+									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M6 18L18 6M6 6l12 12"
+										/>
+									</svg>
+								</button>
+							</div>
+						</div>
+					</div>
+				{/each}
+			{/if}
+		</div>
 	</div>
 </div>

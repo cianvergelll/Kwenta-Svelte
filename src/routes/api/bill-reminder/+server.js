@@ -30,11 +30,11 @@ export async function POST({ request, locals }) {
     }
 
     try {
-        const { bill_title, bill_amount, due_date, recurring_bill, isPaid } = await request.json();
+        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date } = await request.json();
 
         await pool.query(
-            'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid) VALUES (?, ?, ?, ?, ?, ?)',
-            [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid]
+            'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date]
         );
 
         return new Response(JSON.stringify({ message: 'Bill reminder added' }), {
