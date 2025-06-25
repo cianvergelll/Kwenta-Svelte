@@ -352,21 +352,23 @@
 	</div>
 
 	<!-- Main Budget Content -->
-	<div class="mx-auto flex h-[95%] w-[35%] flex-col rounded-lg border border-gray-300 bg-white p-4">
+	<div
+		class="mx-auto flex h-[95%] w-[35%] flex-col overflow-hidden rounded-lg border border-gray-300 bg-white p-4"
+	>
 		<!-- Budget Input Section -->
-		<div class="mb-4 flex flex-col space-y-4 border-b border-gray-300">
+		<div class="mb-4 flex flex-col space-y-4 border-b border-gray-300 pb-4">
 			<!-- Monthly Budget Input -->
 			<div class="flex flex-col">
-				<label class="text-m mb-2 block pl-[5%]" for="total-budget">
+				<label class="mb-1 pl-1 text-sm text-gray-600" for="total-budget">
 					Enter your monthly budget
 				</label>
-				<div class="flex items-center">
+				<div class="flex items-center gap-2">
 					<input
 						id="total-budget"
 						type="number"
 						placeholder="₱ 00.00"
 						bind:value={total_budget}
-						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold disabled:bg-gray-100 disabled:opacity-70"
+						class="flex-1 rounded-lg border border-gray-300 bg-transparent p-3 text-center text-2xl font-bold text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100 disabled:opacity-70"
 						required
 						disabled={hasExistingBudget && !isEditMode}
 					/>
@@ -374,9 +376,9 @@
 						<button
 							onclick={setMonthlyBudget}
 							aria-label="Add expense"
-							class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
+							class="rounded-lg bg-green-500 p-3 transition-colors hover:bg-green-600"
 						>
-							➔
+							<span class="text-white">➔</span>
 						</button>
 					{/if}
 				</div>
@@ -384,16 +386,16 @@
 
 			<!-- Daily Spending Limit Input -->
 			<div class="flex flex-col">
-				<label class="text-m mb-2 block pl-[5%]" for="daily-limit">
+				<label class="mb-1 pl-1 text-sm text-gray-600" for="daily-limit">
 					Enter daily spending limit
 				</label>
-				<div class="flex items-center">
+				<div class="flex items-center gap-2">
 					<input
 						id="daily-limit"
 						type="number"
 						placeholder="₱ 00.00"
 						bind:value={daily_limit}
-						class="w-full rounded-lg border border-gray-800 bg-transparent p-2 text-center text-3xl font-bold text-gray-900 placeholder:text-3xl placeholder:font-bold disabled:bg-gray-100 disabled:opacity-70"
+						class="flex-1 rounded-lg border border-gray-300 bg-transparent p-3 text-center text-2xl font-bold text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100 disabled:opacity-70"
 						required
 						disabled={hasExistingBudget && !isEditMode}
 					/>
@@ -401,9 +403,9 @@
 						<button
 							onclick={setDailyLimit}
 							aria-label="Add expense"
-							class="ml-2 rounded-full bg-green-500 p-2 hover:bg-green-800"
+							class="rounded-lg bg-green-500 p-3 transition-colors hover:bg-green-600"
 						>
-							➔
+							<span class="text-white">➔</span>
 						</button>
 					{/if}
 				</div>
@@ -413,51 +415,52 @@
 		<!-- Category Budget Section -->
 		{#if hasExistingBudget || isEditMode}
 			<div
-				class="relative mx-auto my-2 h-[25%] w-[95%] rounded-2xl border border-gray-300 p-4 {hasExistingBudget &&
+				class="relative mx-auto mt-2 w-full rounded-2xl border border-gray-300 p-4 {hasExistingBudget &&
 				!isEditMode
 					? 'opacity-70'
 					: ''}"
 			>
 				<select
 					bind:value={selected_category}
-					class="mb-2 w-full rounded-lg border p-2 disabled:bg-gray-100 disabled:opacity-70"
+					class="mb-3 w-full rounded-lg border border-gray-300 p-2 disabled:bg-gray-100 disabled:opacity-70"
 					disabled={hasExistingBudget && !isEditMode}
 				>
 					{#each categories as category}
 						<option value={category.name}>{category.label}</option>
 					{/each}
 				</select>
-
-				<input
-					type="number"
-					placeholder="Enter amount"
-					bind:value={category_amount}
-					class="mb-2 w-full rounded-lg border p-2 disabled:bg-gray-100 disabled:opacity-70"
-					disabled={hasExistingBudget && !isEditMode}
-				/>
-
-				<button
-					onclick={addBudget}
-					class="absolute right-2 bottom-2 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
-					disabled={hasExistingBudget && !isEditMode}
-				>
-					Add Budget
-				</button>
+				<div class="flex gap-2">
+					<input
+						type="number"
+						placeholder="Enter amount"
+						bind:value={category_amount}
+						class="flex-1 rounded-lg border border-gray-300 p-2 disabled:bg-gray-100 disabled:opacity-70"
+						disabled={hasExistingBudget && !isEditMode}
+					/>
+					<button
+						onclick={addBudget}
+						class="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
+						disabled={hasExistingBudget && !isEditMode}
+					>
+						Add Budget
+					</button>
+				</div>
 			</div>
 		{/if}
 
 		<!-- Error Message Display -->
 		{#if errorMessage}
-			<div class="mx-auto mb-4 w-[95%] rounded-lg bg-red-100 p-3 text-center text-red-700">
+			<div class="mx-auto my-3 w-full rounded-lg bg-red-100 p-3 text-center text-red-700">
 				{errorMessage}
 			</div>
 		{/if}
 
-		<!-- Budget List or Calendar -->
-		<div
-			class="mx-auto my-5 h-[50%] w-[95%] overflow-y-auto rounded-2xl border border-gray-300 p-4"
-		>
-			<CalendarTracker bind:this={calendarRef} />
+		<!-- Calendar Container - Adjusted for proper sizing -->
+		<div class="mt-3 min-h-0 flex-1">
+			<!-- flex-1 min-h-0 allows proper scrolling -->
+			<div class="h-full overflow-y-auto rounded-2xl border border-gray-300 p-3">
+				<CalendarTracker bind:this={calendarRef} />
+			</div>
 		</div>
 	</div>
 
