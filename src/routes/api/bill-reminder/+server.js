@@ -9,7 +9,7 @@ export async function GET({ locals }) {
     }
 
     try {
-        const [rows] = await pool.query('SELECT * from bill_reminder WHERE user_id = ?', [locals.user.id]);
+        const [rows] = await pool.query('SELECT * from bills_reminder WHERE user_id = ?', [locals.user.id]);
         return new Response(JSON.stringify(rows), {
             headers: { 'Content-Type': 'application/json' }
         });
@@ -33,7 +33,7 @@ export async function POST({ request, locals }) {
         const { bill_title, bill_amount, due_date, recurring_bill, isPaid } = await request.json();
 
         await pool.query(
-            'INSERT INTO bill_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid) VALUES (?, ?, ?, ?, ?, ?)',
             [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid]
         );
 
