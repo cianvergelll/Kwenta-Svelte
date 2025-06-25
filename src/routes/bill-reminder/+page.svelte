@@ -101,6 +101,11 @@
 		}
 	}
 
+	function formatDate(dateString) {
+		const options = { year: 'numeric', month: 'long', day: 'numeric' };
+		return new Date(dateString).toLocaleDateString('en-US', options);
+	}
+
 	onMount(async () => {
 		const token = localStorage.getItem('sessionToken');
 		if (!token) {
@@ -320,7 +325,7 @@
 								<!-- Due Date -->
 								<input
 									type="text"
-									value={bill.due_date}
+									value={formatDate(bill.due_date)}
 									class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm outline-none"
 									readonly
 								/>
@@ -349,7 +354,11 @@
 								</button>
 
 								<!-- Delete -->
-								<button aria-label="Delete" class="ml-2 text-red-600 hover:text-red-800">
+								<button
+									aria-label="Delete"
+									class="ml-2 text-red-600 hover:text-red-800"
+									onclick={() => deleteBill(bill.bill_id)}
+								>
 									<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path
 											stroke-linecap="round"
