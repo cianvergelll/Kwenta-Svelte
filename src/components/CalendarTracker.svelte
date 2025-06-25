@@ -24,7 +24,6 @@
 		'December'
 	];
 
-	// Fetch status when month changes
 	$effect(() => {
 		fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
 	});
@@ -33,9 +32,7 @@
 		const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), date)
 			.toISOString()
 			.split('T')[0];
-
 		const status = dailyStatuses[dateStr];
-
 		return (
 			{
 				on_track: 'bg-green-500',
@@ -45,14 +42,12 @@
 		);
 	}
 
-	// Make sure your fetch function uses proper date formatting
 	async function fetchDailyStatus(month, year) {
 		try {
 			const res = await fetch(`/api/daily-status?month=${month}&year=${year}`);
 			if (res.ok) {
 				const data = await res.json();
 				dailyStatuses = data.reduce((acc, item) => {
-					// Ensure consistent date formatting
 					const dateStr = new Date(item.date).toISOString().split('T')[0];
 					acc[dateStr] = item.status;
 					return acc;
@@ -63,7 +58,6 @@
 		}
 	}
 
-	// Existing calendar functions (prevMonth, nextMonth, etc.)
 	function getDaysInMonth(year, month) {
 		return new Date(year, month + 1, 0).getDate();
 	}
@@ -110,25 +104,26 @@
 		showMonthPicker = false;
 		showYearPicker = false;
 	}
+
 	async function refreshData() {
 		await fetchDailyStatus(currentDate.getMonth() + 1, currentDate.getFullYear());
 	}
 
-	// Expose the refresh function to parent components
 	export { refreshData };
 </script>
 
-<div class="calendar-container">
-	<div class="calendar-header mb-4 flex items-center justify-between">
-		<button onclick={prevMonth} class="rounded p-1 hover:bg-gray-200"> &lt; </button>
-		<div class="flex items-center space-x-2">
+<div class="calendar-container text-sm">
+	<!-- Compact Header -->
+	<div class="calendar-header mb-2 flex items-center justify-between">
+		<button onclick={prevMonth} class="rounded p-1 text-sm hover:bg-gray-200">&lt;</button>
+		<div class="flex items-center space-x-1">
 			<div class="relative">
-				<button onclick={toggleMonthPicker} class="rounded px-2 py-1 font-medium hover:bg-gray-200">
-					{months[currentDate.getMonth()]}
+				<button onclick={toggleMonthPicker} class="rounded px-2 py-1 text-sm hover:bg-gray-200">
+					{months[currentDate.getMonth()].slice(0, 3)}
 				</button>
 				{#if showMonthPicker}
 					<div
-						class="absolute left-0 z-10 mt-1 grid w-32 grid-cols-3 gap-1 rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
+						class="absolute left-0 z-10 mt-1 grid w-28 grid-cols-3 gap-1 rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
 					>
 						{#each months as month, index}
 							<button
@@ -144,17 +139,17 @@
 				{/if}
 			</div>
 			<div class="relative">
-				<button onclick={toggleYearPicker} class="rounded px-2 py-1 font-medium hover:bg-gray-200">
+				<button onclick={toggleYearPicker} class="rounded px-2 py-1 text-sm hover:bg-gray-200">
 					{currentDate.getFullYear()}
 				</button>
 				{#if showYearPicker}
 					<div
-						class="absolute left-0 z-10 mt-1 max-h-40 w-24 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 shadow-lg"
+						class="absolute left-0 z-10 mt-1 max-h-32 w-20 overflow-y-auto rounded-lg border border-gray-300 bg-white p-2 text-xs shadow-lg"
 					>
 						{#each years as year}
 							<button
 								onclick={() => selectYear(year)}
-								class="w-full rounded px-2 py-1 text-left text-sm hover:bg-gray-100 {currentDate.getFullYear() ===
+								class="w-full rounded px-2 py-1 text-left hover:bg-gray-100 {currentDate.getFullYear() ===
 								year
 									? 'bg-blue-100 font-medium'
 									: ''}"
@@ -166,23 +161,25 @@
 				{/if}
 			</div>
 		</div>
-		<button onclick={nextMonth} class="rounded p-1 hover:bg-gray-200"> &gt; </button>
+		<button onclick={nextMonth} class="rounded p-1 text-sm hover:bg-gray-200">&gt;</button>
 	</div>
 
+	<!-- Compact Today Button -->
 	<button
 		onclick={goToToday}
-		class="mb-2 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+		class="mb-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
 	>
 		Today
 	</button>
 
-	<div class="calendar-grid grid grid-cols-7 gap-1">
-		{#each ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as day}
-			<div class="text-center text-sm font-medium text-gray-500">{day}</div>
+	<!-- Compact Calendar Grid -->
+	<div class="calendar-grid grid grid-cols-7 gap-0.5 text-xs">
+		{#each ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as day}
+			<div class="py-1 text-center text-gray-500">{day}</div>
 		{/each}
 
 		{#each Array(getFirstDayOfMonth(currentDate.getFullYear(), currentDate.getMonth())).fill(0) as _, i}
-			<div class="h-8"></div>
+			<div class="h-6"></div>
 		{/each}
 
 		{#each Array(getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth())).fill(0) as _, i}
@@ -200,28 +197,48 @@
 			<div class="flex flex-col items-center">
 				<button
 					onclick={() => selectDate(date)}
-					class="h-8 w-8 rounded-full text-center hover:bg-blue-100 {isSelected
+					class="h-6 w-6 rounded-full text-center hover:bg-blue-100 {isSelected
 						? 'bg-blue-500 text-white'
 						: ''} {isToday ? 'border border-blue-500' : ''}"
 				>
 					{date}
 				</button>
-				<div class={`mt-1 h-2 w-2 rounded-full ${getStatusColor(date)}`}></div>
+				<div class={`mt-0.5 h-1.5 w-1.5 rounded-full ${getStatusColor(date)}`}></div>
 			</div>
 		{/each}
 	</div>
-	<div class="mt-4 flex items-center justify-center space-x-4">
+
+	<!-- Compact Status Legend -->
+	<div class="mt-2 flex items-center justify-center space-x-10 text-xs">
 		<div class="flex items-center space-x-1">
-			<div class="h-3 w-3 rounded-full bg-green-500"></div>
-			<span class="text-xs">On Track</span>
+			<div class="h-2 w-2 rounded-full bg-green-500"></div>
+			<span>On Track</span>
 		</div>
 		<div class="flex items-center space-x-1">
-			<div class="h-3 w-3 rounded-full bg-yellow-500"></div>
-			<span class="text-xs">Caution</span>
+			<div class="h-2 w-2 rounded-full bg-yellow-500"></div>
+			<span>Caution</span>
 		</div>
 		<div class="flex items-center space-x-1">
-			<div class="h-3 w-3 rounded-full bg-red-500"></div>
-			<span class="text-xs">Overspending</span>
+			<div class="h-2 w-2 rounded-full bg-red-500"></div>
+			<span>Overspending</span>
 		</div>
 	</div>
 </div>
+
+<style>
+	.calendar-container {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.calendar-grid {
+		flex: 1;
+		min-height: 0;
+	}
+
+	.calendar-header,
+	.calendar-grid {
+		padding: 0 0.25rem;
+	}
+</style>
