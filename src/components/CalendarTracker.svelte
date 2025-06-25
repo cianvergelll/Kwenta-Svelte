@@ -119,21 +119,6 @@
 </script>
 
 <div class="calendar-container">
-	<div class="mt-4 flex items-center justify-center space-x-4">
-		<div class="flex items-center space-x-1">
-			<div class="h-3 w-3 rounded-full bg-green-500"></div>
-			<span class="text-xs">On Track</span>
-		</div>
-		<div class="flex items-center space-x-1">
-			<div class="h-3 w-3 rounded-full bg-yellow-500"></div>
-			<span class="text-xs">Caution</span>
-		</div>
-		<div class="flex items-center space-x-1">
-			<div class="h-3 w-3 rounded-full bg-red-500"></div>
-			<span class="text-xs">Overspending</span>
-		</div>
-	</div>
-
 	<div class="calendar-header mb-4 flex items-center justify-between">
 		<button onclick={prevMonth} class="rounded p-1 hover:bg-gray-200"> &lt; </button>
 		<div class="flex items-center space-x-2">
@@ -224,5 +209,19 @@
 				<div class={`mt-1 h-2 w-2 rounded-full ${getStatusColor(date)}`}></div>
 			</div>
 		{/each}
+	</div>
+	<div class="mt-4 flex items-center justify-center space-x-4">
+		<div class="flex items-center space-x-1">
+			<div class="h-3 w-3 rounded-full bg-green-500"></div>
+			<span class="text-xs">On Track</span>
+		</div>
+		<div class="flex items-center space-x-1">
+			<div class="h-3 w-3 rounded-full bg-yellow-500"></div>
+			<span class="text-xs">Caution</span>
+		</div>
+		<div class="flex items-center space-x-1">
+			<div class="h-3 w-3 rounded-full bg-red-500"></div>
+			<span class="text-xs">Overspending</span>
+		</div>
 	</div>
 </div>
