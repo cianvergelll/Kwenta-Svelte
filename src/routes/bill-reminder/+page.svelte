@@ -242,11 +242,8 @@
 
 	<!-- Main Content Area -->
 	<div class="flex h-[95%] w-[76%] flex-col gap-5 self-center p-4">
-		<!-- Top Row - Two Equal Columns -->
 		<div class="flex h-[50%] w-full flex-row gap-5">
-			<!-- Bill Form Section (Updated) -->
 			<div class="flex h-full w-1/2 rounded-lg border border-gray-300 bg-white shadow-sm">
-				<!-- Bills Reminder Card - Modified to fill parent -->
 				<div class="flex w-full flex-col">
 					<h2
 						class="py- mx-auto mt-5 flex w-[92%] items-center justify-center rounded-md bg-gradient-to-r from-green-500 to-green-700 py-2 text-center text-lg font-semibold tracking-wide text-white"
@@ -255,7 +252,6 @@
 					</h2>
 
 					<form onsubmit={addBill} class="flex h-full flex-col gap-4 p-6">
-						<!-- Title Input -->
 						<input
 							type="text"
 							bind:value={bill_title}
@@ -264,7 +260,6 @@
 							required
 						/>
 
-						<!-- Amount Input -->
 						<div class="relative">
 							<span class="absolute top-1/2 left-4 -translate-y-1/2 text-lg font-bold text-gray-600"
 							></span>
@@ -277,9 +272,7 @@
 							/>
 						</div>
 
-						<!-- Date and Recurring -->
 						<div class="flex gap-2">
-							<!-- Due Date Dropdown -->
 							<input
 								type="date"
 								bind:value={due_date}
@@ -287,7 +280,6 @@
 								required
 							/>
 
-							<!-- Recurring Checkbox -->
 							<label
 								class="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
 							>
@@ -337,18 +329,16 @@
 				</div>
 			</div>
 
-			<!-- Right Panel (Placeholder)-->
 			<div class="h-full w-1/2 rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
 				<div
-					class="rounded-lg bg-gradient-to-r from-green-600 to-green-700 py-3 text-center font-semibold text-white shadow"
+					class="mb-2 rounded-lg bg-gradient-to-r from-green-600 to-green-700 py-3 text-center font-semibold text-white shadow"
 				>
 					PAID BILLS
 				</div>
 				<div class="max-h-[calc(100%-3.5rem)] overflow-y-auto">
 					{#each paidBills as bill}
-						<!-- Bill Item -->
 						<div
-							class="mb-2 flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow"
+							class="mb-2 flex items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm"
 						>
 							<div>
 								<h3 class="text-lg font-bold text-gray-800">{bill.bill_title}</h3>
@@ -384,7 +374,6 @@
 			</div>
 		</div>
 
-		<!-- Display -->
 		<div class="h-[50%] w-full rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-lg font-semibold text-green-800">BILLS TO BE PAID</h2>
@@ -403,29 +392,20 @@
 				</button>
 			</div>
 
-			<!-- Bill Header -->
 			<div class="mb-2">
-				<!-- Header Row -->
 				<div
 					class="flex items-center justify-between rounded-xl bg-green-100 px-3 py-2 font-semibold"
 				>
-					<!-- Left side (empty space to align with checkbox) -->
 					<div class="flex w-1/6 items-center">
 						<span class="text-green-600">Status</span>
 					</div>
 
-					<!-- Centered content -->
 					<div class="flex w-4/6 items-center justify-between">
-						<!-- Bill Title Header -->
 						<div class="w-1/3 text-center text-green-800">BILL TITLE</div>
-						<!-- Due Date Header -->
 						<div class="w-1/3 text-center text-green-800">DUE DATE</div>
-
-						<!-- Amount Header -->
 						<div class="w-1/3 text-center text-green-800">AMOUNT</div>
 					</div>
 
-					<!-- Right side (empty space to align with buttons) -->
 					<div class="flex w-1/6 justify-end">
 						<span class="text-green-800">ACTIONS</span>
 					</div>
@@ -436,13 +416,10 @@
 					<div class="py-8 text-center">Loading bills...</div>
 				{:else}
 					{#each unpaidBills as bill}
-						<!-- Bill Item -->
 						<div class="mb-2 space-y-3">
-							<!-- Row Start -->
 							<div
 								class="flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-sm"
 							>
-								<!-- Left side (Check icon) -->
 								<button
 									type="button"
 									class="flex w-1/6 items-center focus:outline-none"
@@ -462,17 +439,13 @@
 									</div>
 								</button>
 
-								<!-- Centered content -->
 								<div class="flex w-4/6 items-center justify-between">
-									<!-- Bill Title -->
 									<input
 										type="text"
 										value={bill.bill_title}
 										class="w-1/3 rounded-full border-none bg-white px-3 py-2 text-center text-sm font-semibold uppercase outline-none"
 										readonly
 									/>
-
-									<!-- Due Date -->
 									<input
 										type="text"
 										value={formatDate(bill.due_date)}
@@ -480,7 +453,6 @@
 										readonly
 									/>
 
-									<!-- Amount -->
 									<input
 										type="text"
 										value={bill.bill_amount}
@@ -491,7 +463,6 @@
 
 								<!-- Right side (Buttons) -->
 								<div class="flex w-1/6 justify-end">
-									<!-- Recurring Toggle -->
 									<button
 										aria-label="Toggle recurring"
 										onclick={() => toggleRecurring(bill)}
