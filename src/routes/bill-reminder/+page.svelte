@@ -15,6 +15,8 @@
 	let errorMessage = $state('');
 	let paidBills = $state([]);
 	let unpaidBills = $state([]);
+	let sortDropdownOpen = $state(false);
+	let currentSortMethod = $state('date-asc'); // Default sort by date ascending
 
 	let isModalOpen = $state(false);
 	let editingBill = $state(null);
@@ -22,6 +24,26 @@
 	let modalAmount = $state('');
 	let modalDueDate = $state('');
 	let modalRecurring = $state(false);
+
+	// Sorting functions
+	function sortBills() {
+		switch (currentSortMethod) {
+			case 'date-asc':
+				unpaidBills.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+				break;
+			case 'date-desc':
+				unpaidBills.sort((a, b) => new Date(b.due_date) - new Date(a.due_date));
+				break;
+			case 'amount-asc':
+				unpaidBills.sort((a, b) => parseFloat(a.bill_amount) - parseFloat(b.bill_amount));
+				break;
+			case 'amount-desc':
+				unpaidBills.sort((a, b) => parseFloat(b.bill_amount) - parseFloat(a.bill_amount));
+				break;
+			default:
+				unpaidBills.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+		}
+	}
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -50,6 +72,9 @@
 
 			unpaidBills = [...data.filter((bill) => !bill.isPaid)];
 			paidBills = [...data.filter((bill) => bill.isPaid)];
+
+			// Apply sorting after loading
+			sortBills();
 		} catch (error) {
 			console.error('Error loading bills:', error);
 			errorMessage = 'Network error';
@@ -207,6 +232,12 @@
 	function formatDate(dateString) {
 		const options = { year: 'numeric', month: 'long', day: 'numeric' };
 		return new Date(dateString).toLocaleDateString('en-US', options);
+	}
+
+	function handleSort(method) {
+		currentSortMethod = method;
+		sortBills();
+		sortDropdownOpen = false;
 	}
 
 	onMount(async () => {
@@ -377,19 +408,54 @@
 		<div class="h-[50%] w-full rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
 			<div class="mb-4 flex items-center justify-between">
 				<h2 class="text-lg font-semibold text-green-800">BILLS TO BE PAID</h2>
-				<button
-					class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
-				>
-					Sort According to
-					<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M19 9l-7 7-7-7"
-						/>
-					</svg>
-				</button>
+				<div class="relative">
+					<button
+						onclick={() => (sortDropdownOpen = !sortDropdownOpen)}
+						class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+					>
+						Sort According to
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M19 9l-7 7-7-7"
+							/>
+						</svg>
+					</button>
+					{#if sortDropdownOpen}
+						<div
+							class="ring-opacity-5 absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black"
+						>
+							<div class="py-1">
+								<button
+									onclick={() => handleSort('date-asc')}
+									class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+								>
+									Date (Earliest First)
+								</button>
+								<button
+									onclick={() => handleSort('date-desc')}
+									class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+								>
+									Date (Latest First)
+								</button>
+								<button
+									onclick={() => handleSort('amount-asc')}
+									class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+								>
+									Amount (Lowest First)
+								</button>
+								<button
+									onclick={() => handleSort('amount-desc')}
+									class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+								>
+									Amount (Highest First)
+								</button>
+							</div>
+						</div>
+					{/if}
+				</div>
 			</div>
 
 			<div class="mb-2">
