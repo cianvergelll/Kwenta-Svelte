@@ -260,6 +260,15 @@
 			expense_note = '';
 			await loadExpenses();
 			await fetchMonthlyCategoryExpenses();
+
+			await fetch('/api/daily-status', {
+				method: 'POST',
+				body: JSON.stringify({
+					date: today,
+					amount_spent,
+					daily_limit: dailyLimit
+				})
+			});
 		} catch (error) {
 			console.error('Error adding expenses:', error);
 			errorMessage = 'Network error';

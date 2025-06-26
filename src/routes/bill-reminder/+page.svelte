@@ -317,7 +317,6 @@
 					<div class="flex w-4/6 items-center justify-between">
 						<!-- Bill Title Header -->
 						<div class="w-1/3 text-center text-green-800">BILL TITLE</div>
-
 						<!-- Due Date Header -->
 						<div class="w-1/3 text-center text-green-800">DUE DATE</div>
 

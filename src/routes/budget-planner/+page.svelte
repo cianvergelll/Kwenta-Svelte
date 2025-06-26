@@ -264,6 +264,7 @@
 			originalBudgetData = budgetData;
 			hasExistingBudget = true;
 			isEditMode = false;
+			await loadBudgetData();
 		} catch (error) {
 			console.error('Error adding expenses:', error);
 			errorMessage = 'Failed to save budget';
@@ -303,6 +304,8 @@
 			originalBudgetData = budgetData;
 			hasExistingBudget = true;
 			isEditMode = false;
+
+			await loadBudgetData();
 		} catch (error) {
 			console.error('Error updating budget:', error);
 			errorMessage = 'Failed to update budget';
@@ -330,6 +333,7 @@
 
 			await loadBudgetData();
 			const interval = setInterval(fetchDailyExpenses, 300000);
+			await updateDailyStatus();
 			return () => clearInterval(interval);
 		} catch (error) {
 			console.error('Session verification failed:', error);
