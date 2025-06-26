@@ -484,6 +484,7 @@
 				dataLabel="Amount Spent"
 				chartType="bar"
 				onReload={reloadChart}
+				{expenses}
 			/>
 		</div>
 		<div class="h-[50%] w-full bg-white">

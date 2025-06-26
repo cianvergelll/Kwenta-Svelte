@@ -12,6 +12,7 @@
 		dataLabel?: string;
 		chartType?: ValidChartType;
 		onReload?: () => void;
+		expenses?: any[]; // Add expenses prop to filter by month
 	}
 
 	let {
@@ -20,7 +21,8 @@
 		chartData = [],
 		dataLabel = 'Amount',
 		chartType = 'bar',
-		onReload
+		onReload,
+		expenses = [] // Initialize with empty array
 	} = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
@@ -35,6 +37,39 @@
 		other: 'rgba(156, 163, 175, 0.7)' // Gray
 	};
 
+	// ======= NEW: Filter expenses to current month ========
+	const getCurrentMonthExpenses = () => {
+		const now = new Date();
+		const currentMonth = now.getMonth();
+		const currentYear = now.getFullYear();
+
+		return expenses.filter((expense) => {
+			const expenseDate = new Date(expense.created_at || expense.date);
+			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+		});
+	};
+
+	// ======= MODIFIED: Process only current month's data ========
+	const processChartData = () => {
+		const currentMonthExpenses = getCurrentMonthExpenses();
+		const categoryMap: Record<string, number> = {};
+
+		currentMonthExpenses.forEach((expense) => {
+			const category = expense.expense_category;
+			const amount = parseFloat(expense.expense_amount);
+
+			if (!categoryMap[category]) {
+				categoryMap[category] = 0;
+			}
+			categoryMap[category] += amount;
+		});
+
+		return {
+			labels: Object.keys(categoryMap),
+			data: Object.values(categoryMap)
+		};
+	};
+
 	const getBackgroundColors = (labels: string[]) => {
 		return labels.map((label) => categoryColors[label.toLowerCase()] || 'rgba(75, 192, 192, 0.7)');
 	};
@@ -42,20 +77,19 @@
 	const createChart = () => {
 		if (!canvas) return;
 
-		// Create copies of the arrays to avoid modifying the $state arrays directly
-		const labelsCopy = [...chartLabels];
-		const dataCopy = [...chartData];
+		// Use processed current month data
+		const { labels, data } = processChartData();
 
 		const config: ChartConfiguration = {
 			type: chartType as keyof ChartTypeRegistry,
 			data: {
-				labels: labelsCopy,
+				labels,
 				datasets: [
 					{
 						label: dataLabel,
-						data: dataCopy,
-						backgroundColor: getBackgroundColors(labelsCopy),
-						borderColor: getBackgroundColors(labelsCopy).map((color) => color.replace('0.7', '1')),
+						data,
+						backgroundColor: getBackgroundColors(labels),
+						borderColor: getBackgroundColors(labels).map((color) => color.replace('0.7', '1')),
 						borderWidth: 1
 					}
 				]
@@ -101,16 +135,14 @@
 		createChart();
 	});
 
+	// ======= MODIFIED: Update with current month data ========
 	$effect(() => {
 		if (chart) {
-			// Create copies of the arrays before updating the chart
-			const labelsCopy = [...chartLabels];
-			const dataCopy = [...chartData];
-
-			chart.data.labels = labelsCopy;
-			chart.data.datasets[0].data = dataCopy;
-			chart.data.datasets[0].backgroundColor = getBackgroundColors(labelsCopy);
-			chart.data.datasets[0].borderColor = getBackgroundColors(labelsCopy).map((color) =>
+			const { labels, data } = processChartData();
+			chart.data.labels = labels;
+			chart.data.datasets[0].data = data;
+			chart.data.datasets[0].backgroundColor = getBackgroundColors(labels);
+			chart.data.datasets[0].borderColor = getBackgroundColors(labels).map((color) =>
 				color.replace('0.7', '1')
 			);
 			chart.update();
@@ -128,15 +160,6 @@
 <div class="rounded-xl bg-white p-10">
 	<div class="mb-4 flex items-center justify-between">
 		<h2 class="text-xl font-semibold text-green-700">{title}</h2>
-		<!-- {#if onReload}
-			<button
-				onclick={onReload}
-				class="rounded bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
-				aria-label="Reload chart"
-			>
-				Reload
-			</button>
-		{/if} -->
 	</div>
 
 	<div class="h-64 w-full border border-gray-300">
