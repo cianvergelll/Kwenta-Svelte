@@ -10,8 +10,20 @@ export async function GET({ locals }) {
 
     try {
         const [rows] = await pool.query('SELECT * from bills_reminder WHERE user_id = ?', [locals.user.id]);
-        return new Response(JSON.stringify(rows), {
+
+        const formattedRows = rows.map(row => ({
+            id: row.id,
+            bill_title: row.bill_title,
+            bill_amount: row.bill_amount,
+            due_date: row.due_date,
+            recurring_bill: row.recurring_bill,
+            isPaid: row.isPaid,
+            paid_date: row.paid_date
+        }));
+        console.log(formattedRows);
+        return new Response(JSON.stringify(formattedRows), {
             headers: { 'Content-Type': 'application/json' }
+
         });
     } catch (error) {
         return new Response(JSON.stringify({ error: 'Failed to fetch bill reminder' }), {
@@ -31,12 +43,11 @@ export async function POST({ request, locals }) {
 
     try {
         const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date } = await request.json();
-
         await pool.query(
             'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date]
-        );
 
+        );
         return new Response(JSON.stringify({ message: 'Bill reminder added' }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
