@@ -29,10 +29,15 @@
 	});
 
 	function getStatusColor(date) {
-		const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), date)
-			.toISOString()
-			.split('T')[0];
+		// Create a LOCAL date object (ignoring timezone shifts)
+		const currentDateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), date);
+
+		// Format as YYYY-MM-DD (timezone-neutral)
+		const dateStr = currentDateObj.toLocaleDateString('en-CA'); // 'en-CA' gives YYYY-MM-DD
+
+		// Match against fetched data
 		const status = dailyStatuses[dateStr];
+
 		return (
 			{
 				on_track: 'bg-green-500',
