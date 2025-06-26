@@ -80,12 +80,21 @@
 	let daily_spent = $state(0);
 	let isOnPage = $state(false);
 
+	// ======== FIXED: Update totalSpent to only include current month ========
 	$effect(() => {
-		const total = expenses
+		const now = new Date();
+		const currentMonth = now.getMonth();
+		const currentYear = now.getFullYear();
+
+		const currentMonthTotal = expenses
+			.filter((expense) => {
+				const expenseDate = new Date(expense.created_at || expense.date);
+				return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+			})
 			.reduce((sum, expense) => sum + Number(expense.expense_amount), 0)
 			.toFixed(2);
 
-		$totalSpent = total;
+		$totalSpent = currentMonthTotal;
 	});
 
 	let showModal = $state(false);
@@ -131,7 +140,7 @@
 			}
 
 			closeModal();
-			await loadExpenses();
+			await loadExpenses(); // This will trigger $effect and update totalSpent correctly
 			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error updating expense:', error);
@@ -148,7 +157,7 @@
 
 		// Filter expenses to current month
 		currentMonthExpenses = expenses.filter((expense) => {
-			const expenseDate = new Date(expense.created_at || expense.date); // Use appropriate date field
+			const expenseDate = new Date(expense.created_at || expense.date);
 			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
 		});
 
@@ -315,7 +324,7 @@
 			expense_amount = '';
 			expense_category = '';
 			expense_note = '';
-			await loadExpenses();
+			await loadExpenses(); // This will trigger $effect and update totalSpent correctly
 			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error adding expenses:', error);

@@ -20,6 +20,7 @@ export async function GET({ locals }) {
             isPaid: row.isPaid,
             paid_date: row.paid_date
         }));
+
         return new Response(JSON.stringify(formattedRows), {
             headers: { 'Content-Type': 'application/json' }
 
@@ -42,6 +43,7 @@ export async function POST({ request, locals }) {
 
     try {
         const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date } = await request.json();
+
         await pool.query(
             'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
             [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date]

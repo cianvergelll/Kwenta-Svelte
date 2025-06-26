@@ -16,7 +16,7 @@
 	let paidBills = $state([]);
 	let unpaidBills = $state([]);
 	let sortDropdownOpen = $state(false);
-	let currentSortMethod = $state('date-asc'); // Default sort by date ascending
+	let currentSortMethod = $state('date-asc');
 
 	let isModalOpen = $state(false);
 	let editingBill = $state(null);
@@ -25,7 +25,6 @@
 	let modalDueDate = $state('');
 	let modalRecurring = $state(false);
 
-	// Sorting functions
 	function sortBills() {
 		switch (currentSortMethod) {
 			case 'date-asc':
@@ -73,7 +72,6 @@
 			unpaidBills = [...data.filter((bill) => !bill.isPaid)];
 			paidBills = [...data.filter((bill) => bill.isPaid)];
 
-			// Apply sorting after loading
 			sortBills();
 		} catch (error) {
 			console.error('Error loading bills:', error);
@@ -85,21 +83,44 @@
 
 	async function markAsPaid(bill) {
 		try {
+			// First, mark the current bill as paid
 			const res = await fetch(`/api/bill-reminder/${bill.id}`, {
 				method: 'PUT',
 				headers: await getAuthHeaders(),
 				body: JSON.stringify({
 					...bill,
-					isPaid: true,
-					paid_date: new Date().toISOString()
+					isPaid: 1,
+					paid_date: new Date().toISOString().split('T')[0]
 				})
 			});
 
-			if (res.ok) {
-				await loadBills();
+			if (!res.ok) throw new Error('Failed to mark as paid');
+
+			// If it's a recurring bill, create a new bill with next month's due date
+			if (bill.recurring_bill) {
+				const currentDueDate = new Date(bill.due_date);
+				const nextDueDate = new Date(currentDueDate.setMonth(currentDueDate.getMonth() + 1))
+					.toISOString()
+					.split('T')[0];
+
+				await fetch('/api/bill-reminder', {
+					method: 'POST',
+					headers: await getAuthHeaders(),
+					body: JSON.stringify({
+						bill_title: bill.bill_title,
+						bill_amount: bill.bill_amount,
+						due_date: nextDueDate,
+						recurring_bill: true,
+						isPaid: false,
+						paid_date: null
+					})
+				});
 			}
+
+			await loadBills();
 		} catch (error) {
-			console.error('Error marking bill as paid:', error);
+			console.error('Error in markAsPaid:', error);
+			errorMessage = error.message;
 		}
 	}
 
@@ -265,6 +286,7 @@
 	});
 </script>
 
+<!-- The rest of your template remains exactly the same -->
 <div class="flex h-screen w-screen bg-gray-100">
 	<!-- Side Navigation -->
 	<div class="ml-5 flex h-[95%] w-1/5 flex-col self-center rounded-xl shadow-lg">
