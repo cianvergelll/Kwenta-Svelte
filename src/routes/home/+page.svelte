@@ -17,6 +17,9 @@
 	];
 	let categorySpending = $state({});
 	let isEditMode = $state(false);
+	let sortDropdownOpen = $state(false);
+	let currentSortMethod = $state('date-desc'); // Default: newest first
+	let currentMonthExpenses = $state([]);
 
 	// Existing functions
 	function removeBudget(id) {
@@ -37,7 +40,6 @@
 		}
 	}
 
-	// New function to fetch monthly category expenses
 	async function fetchMonthlyCategoryExpenses() {
 		try {
 			const res = await fetch('/api/expenses/monthly');
@@ -137,6 +139,60 @@
 		}
 	}
 
+	// New function to filter and sort expenses
+	function processAndSortExpenses() {
+		// Get current month and year
+		const now = new Date();
+		const currentMonth = now.getMonth();
+		const currentYear = now.getFullYear();
+
+		// Filter expenses to current month
+		currentMonthExpenses = expenses.filter((expense) => {
+			const expenseDate = new Date(expense.created_at || expense.date); // Use appropriate date field
+			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+		});
+
+		// Sort expenses based on current method
+		switch (currentSortMethod) {
+			case 'date-desc':
+				currentMonthExpenses.sort(
+					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
+				);
+				break;
+			case 'date-asc':
+				currentMonthExpenses.sort(
+					(a, b) => new Date(a.created_at || a.date) - new Date(b.created_at || b.date)
+				);
+				break;
+			case 'amount-desc':
+				currentMonthExpenses.sort(
+					(a, b) => parseFloat(b.expense_amount) - parseFloat(a.expense_amount)
+				);
+				break;
+			case 'amount-asc':
+				currentMonthExpenses.sort(
+					(a, b) => parseFloat(a.expense_amount) - parseFloat(b.expense_amount)
+				);
+				break;
+			case 'category-asc':
+				currentMonthExpenses.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
+				break;
+			case 'category-desc':
+				currentMonthExpenses.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
+				break;
+			default:
+				currentMonthExpenses.sort(
+					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
+				);
+		}
+	}
+
+	function handleSort(method) {
+		currentSortMethod = method;
+		processAndSortExpenses();
+		sortDropdownOpen = false;
+	}
+
 	onMount(async () => {
 		const token = localStorage.getItem('sessionToken');
 		if (!token) {
@@ -232,6 +288,7 @@
 
 			expenses = await res.json();
 			processExpenseData(expenses);
+			processAndSortExpenses(); // Process and sort after loading
 		} catch (error) {
 			console.error('Error loading expenses:', error);
 			errorMessage = 'Network error';
@@ -260,15 +317,6 @@
 			expense_note = '';
 			await loadExpenses();
 			await fetchMonthlyCategoryExpenses();
-
-			await fetch('/api/daily-status', {
-				method: 'POST',
-				body: JSON.stringify({
-					date: today,
-					amount_spent,
-					daily_limit: dailyLimit
-				})
-			});
 		} catch (error) {
 			console.error('Error adding expenses:', error);
 			errorMessage = 'Network error';
@@ -312,13 +360,7 @@
 	let chartLabels = $state([]);
 	let chartData = $state([]);
 
-	onMount(async () => {
-		expenses = await fetchExpenses();
-		processExpenseData(expenses);
-	});
-
 	function processExpenseData(expenses) {
-		console.log('processExpenseData called');
 		const categoryMap = {};
 
 		expenses.forEach((expense) => {
@@ -333,13 +375,6 @@
 
 		chartLabels = Object.keys(categoryMap);
 		chartData = Object.values(categoryMap);
-
-		console.log(
-			'Processed data - Labels:',
-			$state.snapshot(chartLabels),
-			'Data:',
-			$state.snapshot(chartData)
-		);
 	}
 
 	function reloadChart() {
@@ -448,11 +483,75 @@
 					<div class="py-8 text-center">Loading expenses...</div>
 				{:else}
 					<div class="relative h-full w-full">
+						<!-- Add Sort Button Here -->
+						<div class="mb-3 flex justify-end pr-5">
+							<div class="relative">
+								<button
+									onclick={() => (sortDropdownOpen = !sortDropdownOpen)}
+									class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+								>
+									Sort Expenses
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M19 9l-7 7-7-7"
+										/>
+									</svg>
+								</button>
+								{#if sortDropdownOpen}
+									<div
+										class="ring-opacity-5 absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black"
+									>
+										<div class="py-1">
+											<button
+												onclick={() => handleSort('date-desc')}
+												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+											>
+												Date (Newest First)
+											</button>
+											<button
+												onclick={() => handleSort('date-asc')}
+												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+											>
+												Date (Oldest First)
+											</button>
+											<button
+												onclick={() => handleSort('amount-desc')}
+												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+											>
+												Amount (High to Low)
+											</button>
+											<button
+												onclick={() => handleSort('amount-asc')}
+												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+											>
+												Amount (Low to High)
+											</button>
+											<button
+												onclick={() => handleSort('category-asc')}
+												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+											>
+												Category (A-Z)
+											</button>
+											<button
+												onclick={() => handleSort('category-desc')}
+												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+											>
+												Category (Z-A)
+											</button>
+										</div>
+									</div>
+								{/if}
+							</div>
+						</div>
+
 						<ul
 							bind:this={expensesList}
 							class="my-3 flex max-h-65 w-full flex-col items-center space-y-4 overflow-y-auto pr-2"
 						>
-							{#each expenses as expense}
+							{#each currentMonthExpenses as expense}
 								<li
 									class={`flex w-[95%] items-center justify-between rounded-lg p-4 shadow
                     ${
@@ -470,7 +569,6 @@
 										}
                   `}
 								>
-									<!-- Left: Expense details in column -->
 									<div class="flex flex-col">
 										<span class="text-base text-white">
 											{expense.expense_category.charAt(0).toUpperCase() +
@@ -478,8 +576,10 @@
 										</span>
 										<span class="text-2xl font-bold text-white">₱{expense.expense_amount}</span>
 										<span class="text-sm text-white">{expense.expense_note}</span>
+										<span class="text-xs text-white opacity-80">
+											{new Date(expense.created_at || expense.date).toLocaleDateString()}
+										</span>
 									</div>
-									<!-- Right: Buttons in row, justified end -->
 									<div class="flex flex-row justify-end space-x-2">
 										<button
 											class="rounded bg-yellow-500 px-3 py-1 text-white transition-colors hover:bg-yellow-600"
@@ -498,7 +598,7 @@
 							{/each}
 						</ul>
 						<h1 class="text-center text-xl font-bold text-green-600">
-							TOTAL MONEY SPENT TODAY: ₱ {$totalSpent}
+							TOTAL MONEY SPENT THIS MONTH: ₱ {$totalSpent}
 						</h1>
 					</div>
 				{/if}
