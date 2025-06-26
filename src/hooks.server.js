@@ -46,14 +46,14 @@ export async function handle({ event, resolve }) {
     return await resolve(event);
 }
 
-async function initializeNewDay() {
-    const today = new Date().toISOString().split('T')[0];
+// async function initializeNewDay() {
+//     const today = new Date().toISOString().split('T')[0];
 
-    await pool.query(
-        `INSERT INTO daily_status (user_id, date, amount_spent, daily_limit)
-     SELECT id, $1, 0, daily_limit 
-     FROM users
-     ON CONFLICT (user_id, date) DO NOTHING`,
-        [today]
-    );
-}
+//     await pool.query(
+//         `INSERT INTO daily_status (user_id, date, amount_spent, daily_limit)
+//      SELECT id, $1, 0, daily_limit
+//      FROM users
+//      ON CONFLICT (user_id, date) DO NOTHING`,
+//         [today]
+//     );
+// }

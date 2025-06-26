@@ -1,5 +1,6 @@
 <script>
 	import SideNav from '../../components/Sidenav.svelte';
+	import BillModal from '../../components/BillModal.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 
@@ -14,6 +15,13 @@
 	let errorMessage = $state('');
 	let paidBills = $state([]);
 	let unpaidBills = $state([]);
+
+	let isModalOpen = $state(false);
+	let editingBill = $state(null);
+	let modalTitle = $state('');
+	let modalAmount = $state('');
+	let modalDueDate = $state('');
+	let modalRecurring = $state(false);
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -33,15 +41,15 @@
 
 			if (!res.ok) {
 				const err = await res.json();
-				errorMessage = err.error || 'Failed to load bill';
+				errorMessage = err.error || 'Failed to load bills';
 				return;
 			}
 
-			bills = await res.json();
+			const data = await res.json();
+			bills = data;
 
-			console.log(bills);
-			unpaidBills = bills.filter((bill) => !bill.isPaid);
-			paidBills = bills.filter((bill) => bill.isPaid);
+			unpaidBills = [...data.filter((bill) => !bill.isPaid)];
+			paidBills = [...data.filter((bill) => bill.isPaid)];
 		} catch (error) {
 			console.error('Error loading bills:', error);
 			errorMessage = 'Network error';
@@ -63,16 +71,35 @@
 			});
 
 			if (res.ok) {
-				// // Animate the transition
-				// const billElement = document.getElementById(`${id}`);
-				// if (billElement) {
-				// 	billElement.classList.add('fade-out');
-				// 	setTimeout(() => loadBills(), 300);
-				// }
+				await loadBills();
 			}
-			await loadBills();
+
+			console.log('Original due_date:', bill.due_date);
+			console.log('Submitted due_date:', new Date(bill.due_date).toISOString());
 		} catch (error) {
 			console.error('Error marking bill as paid:', error);
+		}
+	}
+
+	async function markAsUnpaid(bill) {
+		try {
+			const res = await fetch(`/api/bill-reminder/${bill.id}`, {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					...bill,
+					isPaid: false,
+					paid_date: null
+				})
+			});
+
+			if (res.ok) {
+				await loadBills(); // This will refresh both lists
+			}
+			console.log('Original due_date:', bill.due_date);
+			console.log('Submitted due_date:', new Date(bill.due_date).toISOString());
+		} catch (error) {
+			console.error('Error marking bill as unpaid:', error);
 		}
 	}
 
@@ -130,6 +157,36 @@
 		} catch (error) {
 			console.error('Error deleting bill:', error);
 			errorMessage = 'Network error';
+		}
+	}
+
+	function openEditModal(bill) {
+		editingBill = bill;
+		modalTitle = bill.bill_title;
+		modalAmount = bill.bill_amount;
+		modalDueDate = bill.due_date.split('T')[0];
+		modalRecurring = bill.recurring_bill;
+		isModalOpen = true;
+	}
+
+	async function saveEditedBill() {
+		try {
+			const res = await fetch(`/api/bill-reminder/${editingBill.id}`, {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					...editingBill,
+					bill_title: modalTitle,
+					bill_amount: modalAmount,
+					due_date: modalDueDate,
+					recurring_bill: modalRecurring
+				})
+			});
+			if (!res.ok) throw new Error('Failed to update');
+			await loadBills();
+			isModalOpen = false;
+		} catch (error) {
+			errorMessage = error.message;
 		}
 	}
 
@@ -266,20 +323,46 @@
 				</div>
 			</div>
 
-			<!-- Right Panel (Placeholder) -->
+			<!-- Right Panel (Placeholder)-->
 			<div class="h-full w-1/2 rounded-lg border border-gray-300 bg-white p-4 shadow-sm">
-				<h2 class="mb-4 text-lg font-semibold text-green-800">PAID BILLS</h2>
-				{#each paidBills as bill}
-					<div class="mb-2 border-b p-2">
-						<div class="flex justify-between">
-							<span>{bill.bill_title}</span>
-							<span>₱{bill.bill_amount}</span>
+				<div
+					class="rounded-lg bg-gradient-to-r from-green-600 to-green-700 py-3 text-center font-semibold text-white shadow"
+				>
+					PAID BILLS
+				</div>
+				<div class="max-h-[calc(100%-3.5rem)] overflow-y-auto">
+					{#each paidBills as bill}
+						<!-- Bill Item 1 -->
+						<div class="mb-2 flex items-start justify-between rounded-xl bg-white px-4 py-3 shadow">
+							<div>
+								<h3 class="text-lg font-bold text-gray-800">{bill.bill_title}</h3>
+								<p class="text-sm text-gray-600">Due Date: {formatDate(bill.due_date)}</p>
+								<p class="text-sm text-gray-600">Bill Amount: ₱{bill.bill_amount}</p>
+								<p class="mt-1 text-sm font-semibold text-green-700">
+									Paid On: {formatDate(bill.paid_date)}
+								</p>
+							</div>
+							<button
+								aria-label="Delete"
+								class="mt-1 text-red-600 hover:text-red-800"
+								onclick={() => markAsUnpaid(bill)}
+							>
+								<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+									<circle cx="10" cy="10" r="10" />
+									<line
+										x1="6"
+										y1="10"
+										x2="14"
+										y2="10"
+										stroke="white"
+										stroke-width="2"
+										stroke-linecap="round"
+									/>
+								</svg>
+							</button>
 						</div>
-						<div class="text-sm text-gray-500">
-							Paid on {formatDate(bill.paid_date)}
-						</div>
-					</div>
-				{/each}
+					{/each}
+				</div>
 			</div>
 		</div>
 
@@ -330,108 +413,173 @@
 					</div>
 				</div>
 			</div>
-
-			{#if isLoading && bills.length === 0}
-				<div class="py-8 text-center">Loading bills...</div>
-			{:else}
-				{#each bills as bill}
-					<!-- Bill Item -->
-					<div class="mb-2 space-y-3">
-						<!-- Row Start -->
-						<div
-							class="flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-sm"
-						>
-							<!-- Left side (Check icon) -->
-							<button
-								type="button"
-								class="flex w-1/6 items-center focus:outline-none"
-								aria-label="Mark as paid"
-								onclick={() => markAsPaid(bill)}
+			<div class="max-h-[calc(100%-7rem)] overflow-y-auto">
+				{#if isLoading && bills.length === 0}
+					<div class="py-8 text-center">Loading bills...</div>
+				{:else}
+					{#each unpaidBills as bill}
+						<!-- Bill Item -->
+						<div class="mb-2 space-y-3">
+							<!-- Row Start -->
+							<div
+								class="flex items-center justify-between rounded-xl border bg-white px-3 py-2 shadow-sm"
 							>
-								<div class="text-green-600">
-									<svg class="ml-2 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<circle cx="12" cy="12" r="10" stroke-width="2" />
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M9 12l2 2 4-4"
-										/>
-									</svg>
-								</div>
-							</button>
-
-							<!-- Centered content -->
-							<div class="flex w-4/6 items-center justify-between">
-								<!-- Bill Title -->
-								<input
-									type="text"
-									value={bill.bill_title}
-									class="w-1/3 rounded-full border-none bg-white px-3 py-2 text-center text-sm font-semibold uppercase outline-none"
-									readonly
-								/>
-
-								<!-- Due Date -->
-								<input
-									type="text"
-									value={formatDate(bill.due_date)}
-									class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm outline-none"
-									readonly
-								/>
-
-								<!-- Amount -->
-								<input
-									type="text"
-									value={bill.bill_amount}
-									class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm font-semibold outline-none"
-									readonly
-								/>
-							</div>
-
-							<!-- Right side (Buttons) -->
-							<div class="flex w-1/6 justify-end">
-								<!-- Edit -->
-								<button aria-label="Edit" class="ml-2 text-green-600 hover:text-green-800">
-									<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M11 5h2M5 19h14M16 3l5 5-11 11H5v-5L16 3z"
-										/>
-									</svg>
-								</button>
-
-								<!-- Delete -->
+								<!-- Left side (Check icon) -->
 								<button
-									aria-label="Delete"
-									class="ml-2 text-red-600 hover:text-red-800"
-									onclick={() => deleteBill(bill.id)}
+									type="button"
+									class="flex w-1/6 items-center focus:outline-none"
+									aria-label="Mark as paid"
+									onclick={() => markAsPaid(bill)}
 								>
-									<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M6 18L18 6M6 6l12 12"
-										/>
-									</svg>
+									<div class="text-green-600">
+										<svg class="ml-2 h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<circle cx="12" cy="12" r="10" stroke-width="2" />
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M9 12l2 2 4-4"
+											/>
+										</svg>
+									</div>
 								</button>
+
+								<!-- Centered content -->
+								<div class="flex w-4/6 items-center justify-between">
+									<!-- Bill Title -->
+									<input
+										type="text"
+										value={bill.bill_title}
+										class="w-1/3 rounded-full border-none bg-white px-3 py-2 text-center text-sm font-semibold uppercase outline-none"
+										readonly
+									/>
+
+									<!-- Due Date -->
+									<input
+										type="text"
+										value={formatDate(bill.due_date)}
+										class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm outline-none"
+										readonly
+									/>
+
+									<!-- Amount -->
+									<input
+										type="text"
+										value={bill.bill_amount}
+										class="w-1/3 rounded-full border-none bg-white px-2 py-2 text-center text-sm font-semibold outline-none"
+										readonly
+									/>
+								</div>
+
+								<!-- Right side (Buttons) -->
+								<div class="flex w-1/6 justify-end">
+									<!-- Edit -->
+									<button
+										aria-label="Edit"
+										onclick={() => openEditModal(bill)}
+										class="ml-2 text-green-600 hover:text-green-800"
+									>
+										<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M11 5h2M5 19h14M16 3l5 5-11 11H5v-5L16 3z"
+											/>
+										</svg>
+									</button>
+
+									<!-- Delete -->
+									<button
+										aria-label="Delete"
+										class="ml-2 text-red-600 hover:text-red-800"
+										onclick={() => deleteBill(bill.id)}
+									>
+										<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M6 18L18 6M6 6l12 12"
+											/>
+										</svg>
+									</button>
+								</div>
 							</div>
 						</div>
-					</div>
-				{/each}
-			{/if}
+					{/each}
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>
 
-<!-- <style>
-	.fade-out {
-		opacity: 0;
-		transform: translateX(20px);
-		transition:
-			opacity 0.3s ease,
-			transform 0.3s ease;
-	}
-</style> -->
+<!-- Edit Modal -->
+{#if isModalOpen}
+	<div
+		class="bg-opacity-40 fixed inset-0 z-40 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm transition-opacity duration-300"
+	>
+		<div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+			<h2 class="mb-4 text-xl font-bold text-gray-800">Edit Bill</h2>
+
+			<div class="mb-4">
+				<label for="edit-title" class="mb-1 block text-sm font-medium text-gray-700">Title</label>
+				<input
+					id="edit-title"
+					bind:value={modalTitle}
+					class="w-full rounded border border-gray-300 p-2"
+					required
+				/>
+			</div>
+
+			<div class="mb-4">
+				<label for="edit-amount" class="mb-1 block text-sm font-medium text-gray-700">Amount</label>
+				<input
+					id="edit-amount"
+					type="number"
+					bind:value={modalAmount}
+					class="w-full rounded border border-gray-300 p-2"
+					required
+				/>
+			</div>
+
+			<div class="mb-4">
+				<label for="edit-due-date" class="mb-1 block text-sm font-medium text-gray-700"
+					>Due Date</label
+				>
+				<input
+					id="edit-due-date"
+					type="date"
+					bind:value={modalDueDate}
+					class="w-full rounded border border-gray-300 p-2"
+					required
+				/>
+			</div>
+
+			<div class="mb-4 flex items-center">
+				<input
+					id="edit-recurring"
+					type="checkbox"
+					bind:checked={modalRecurring}
+					class="h-4 w-4 rounded text-green-600"
+				/>
+				<label for="edit-recurring" class="ml-2 text-sm text-gray-700">Recurring Bill</label>
+			</div>
+
+			<div class="flex justify-end space-x-2">
+				<button
+					onclick={() => (isModalOpen = false)}
+					class="rounded bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
+				>
+					Cancel
+				</button>
+				<button
+					onclick={saveEditedBill}
+					class="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+				>
+					Save Changes
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
