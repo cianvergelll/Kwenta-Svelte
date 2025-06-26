@@ -91,10 +91,29 @@
 			});
 
 			if (res.ok) {
-				await loadBills(); // This will refresh both lists
+				await loadBills();
 			}
 		} catch (error) {
 			console.error('Error marking bill as unpaid:', error);
+		}
+	}
+
+	async function toggleRecurring(bill) {
+		try {
+			const res = await fetch(`/api/bill-reminder/${bill.id}`, {
+				method: 'PUT',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					...bill,
+					recurring_bill: !bill.recurring_bill
+				})
+			});
+
+			if (res.ok) {
+				await loadBills();
+			}
+		} catch (error) {
+			console.error('Error toggling recurring status:', error);
 		}
 	}
 
@@ -327,8 +346,10 @@
 				</div>
 				<div class="max-h-[calc(100%-3.5rem)] overflow-y-auto">
 					{#each paidBills as bill}
-						<!-- Bill Item 1 -->
-						<div class="mb-2 flex items-start justify-between rounded-xl bg-white px-4 py-3 shadow">
+						<!-- Bill Item -->
+						<div
+							class="mb-2 flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow"
+						>
 							<div>
 								<h3 class="text-lg font-bold text-gray-800">{bill.bill_title}</h3>
 								<p class="text-sm text-gray-600">Due Date: {formatDate(bill.due_date)}</p>
@@ -337,24 +358,26 @@
 									Paid On: {formatDate(bill.paid_date)}
 								</p>
 							</div>
-							<button
-								aria-label="Delete"
-								class="mt-1 text-red-600 hover:text-red-800"
-								onclick={() => markAsUnpaid(bill)}
-							>
-								<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-									<circle cx="10" cy="10" r="10" />
-									<line
-										x1="6"
-										y1="10"
-										x2="14"
-										y2="10"
-										stroke="white"
-										stroke-width="2"
-										stroke-linecap="round"
-									/>
-								</svg>
-							</button>
+							<div class="flex h-full items-center">
+								<button
+									aria-label="Mark as unpaid"
+									class="text-red-600 hover:text-red-800"
+									onclick={() => markAsUnpaid(bill)}
+								>
+									<svg class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+										<circle cx="10" cy="10" r="10" />
+										<line
+											x1="6"
+											y1="10"
+											x2="14"
+											y2="10"
+											stroke="white"
+											stroke-width="2"
+											stroke-linecap="round"
+										/>
+									</svg>
+								</button>
+							</div>
 						</div>
 					{/each}
 				</div>
@@ -468,13 +491,32 @@
 
 								<!-- Right side (Buttons) -->
 								<div class="flex w-1/6 justify-end">
+									<!-- Recurring Toggle -->
+									<button
+										aria-label="Toggle recurring"
+										onclick={() => toggleRecurring(bill)}
+										class="ml-2 {bill.recurring_bill ? 'text-green-600' : 'text-gray-400'}"
+										title={bill.recurring_bill
+											? 'Recurring (click to disable)'
+											: 'Not recurring (click to enable)'}
+									>
+										<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+											/>
+										</svg>
+									</button>
+
 									<!-- Edit -->
 									<button
 										aria-label="Edit"
 										onclick={() => openEditModal(bill)}
 										class="ml-2 text-green-600 hover:text-green-800"
 									>
-										<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path
 												stroke-linecap="round"
 												stroke-linejoin="round"
@@ -490,7 +532,7 @@
 										class="ml-2 text-red-600 hover:text-red-800"
 										onclick={() => deleteBill(bill.id)}
 									>
-										<svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 											<path
 												stroke-linecap="round"
 												stroke-linejoin="round"

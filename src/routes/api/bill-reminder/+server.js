@@ -20,7 +20,6 @@ export async function GET({ locals }) {
             isPaid: row.isPaid,
             paid_date: row.paid_date
         }));
-        console.log(formattedRows);
         return new Response(JSON.stringify(formattedRows), {
             headers: { 'Content-Type': 'application/json' }
 
