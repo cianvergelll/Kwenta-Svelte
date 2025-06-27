@@ -20,6 +20,8 @@
 				return 'bg-gradient-to-r from-purple-500 to-purple-800';
 			case 'other':
 				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			case 'bill':
+				return 'bg-gradient-to-r from-green-400 to-green-700';
 			default:
 				return 'bg-white';
 		}
@@ -60,6 +62,7 @@
 					<option value="utilities">Utilities</option>
 					<option value="entertainment">Entertainment</option>
 					<option value="other">Other</option>
+					<option value="bill">Bill</option>
 				</select>
 			</div>
 

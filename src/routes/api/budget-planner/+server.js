@@ -50,11 +50,12 @@ export async function POST({ request, locals }) {
             transportation_budget,
             utilities_budget,
             entertainment_budget,
-            others_budget
+            others_budget,
+            bills_budget
         } = await request.json();
 
         await pool.query(
-            'INSERT INTO budget_plan (user_id, total_budget, daily_limit, food_budget, transportation_budget, utilities_budget, entertainment_budget, others_budget) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO budget_plan (user_id, total_budget, daily_limit, food_budget, transportation_budget, utilities_budget, entertainment_budget, others_budget, bills_budget) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 locals.user.id,
                 total_budget,
@@ -63,7 +64,8 @@ export async function POST({ request, locals }) {
                 transportation_budget,
                 utilities_budget,
                 entertainment_budget,
-                others_budget
+                others_budget,
+                bills_budget
             ]
         );
 
@@ -100,11 +102,12 @@ export async function PUT({ request, locals }) {
             transportation_budget,
             utilities_budget,
             entertainment_budget,
-            others_budget
+            others_budget,
+            bills_budget
         } = await request.json();
 
         await pool.query(
-            'UPDATE budget_plan SET total_budget = ?, daily_limit = ?, food_budget = ?, transportation_budget = ?, utilities_budget = ?, entertainment_budget = ?, others_budget = ? WHERE user_id = ?',
+            'UPDATE budget_plan SET total_budget = ?, daily_limit = ?, food_budget = ?, transportation_budget = ?, utilities_budget = ?, entertainment_budget = ?, others_budget = ?, bills_budget = ? WHERE user_id = ?',
             [
                 total_budget,
                 daily_limit,
@@ -113,6 +116,7 @@ export async function PUT({ request, locals }) {
                 utilities_budget,
                 entertainment_budget,
                 others_budget,
+                bills_budget,
                 locals.user.id
             ]
         );

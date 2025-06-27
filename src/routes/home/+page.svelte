@@ -63,7 +63,7 @@
 				return 'bg-gradient-to-r from-purple-500 to-purple-800';
 			case 'others_budget':
 				return 'bg-gradient-to-r from-gray-400 to-gray-700';
-			case 'bills':
+			case 'bills_budget':
 				return 'bg-gradient-to-r from-green-400 to-green-700';
 			default:
 				return 'bg-gray-50';
@@ -264,7 +264,8 @@
 					{ category: 'transportation_budget', amount: budget.transportation_budget, id: 2 },
 					{ category: 'utilities_budget', amount: budget.utilities_budget, id: 3 },
 					{ category: 'entertainment_budget', amount: budget.entertainment_budget, id: 4 },
-					{ category: 'others_budget', amount: budget.others_budget, id: 5 }
+					{ category: 'others_budget', amount: budget.others_budget, id: 5 },
+					{ category: 'bills_budget', amount: budget.bills_budget, id: 6 }
 				].filter((item) => item.amount > 0);
 			}
 		} catch (error) {
@@ -326,7 +327,7 @@
 			expense_amount = '';
 			expense_category = '';
 			expense_note = '';
-			await loadExpenses(); // This will trigger $effect and update totalSpent correctly
+			await loadExpenses();
 			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error adding expenses:', error);
@@ -356,7 +357,6 @@
 			errorMessage = 'Network error';
 		}
 	}
-
 	async function fetchExpenses() {
 		try {
 			const response = await fetch('/api/expenses');
@@ -463,7 +463,7 @@
 		<a
 			href="/budget-planner"
 			class="my-auto flex h-[40%] flex-col items-center justify-center overflow-hidden rounded-xl bg-white shadow-xl"
-			><div class="h-full w-full">
+			><div class="h-full w-full overflow-y-auto">
 				<CategoryBudget
 					{category_budgets}
 					{categories}

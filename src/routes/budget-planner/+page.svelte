@@ -32,7 +32,8 @@
 		{ name: 'transportation_budget', label: 'Transportation' },
 		{ name: 'utilities_budget', label: 'Utilities' },
 		{ name: 'entertainment_budget', label: 'Entertainment' },
-		{ name: 'others_budget', label: 'Others' }
+		{ name: 'others_budget', label: 'Others' },
+		{ name: 'bills_budget', label: 'Bills' }
 	];
 
 	// Helper functions
@@ -48,6 +49,8 @@
 				return 'bg-gradient-to-r from-purple-500 to-purple-800';
 			case 'others_budget':
 				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			case 'bills_budget':
+				return 'bg-gradient-to-r from-green-400 to-green-700';
 			default:
 				return 'bg-gray-50';
 		}
@@ -132,7 +135,6 @@
 	function toggleEditMode() {
 		isEditMode = !isEditMode;
 		if (!isEditMode && hasExistingBudget) {
-			// Reset to original values when canceling edit
 			total_budget = originalBudgetData.total_budget;
 			daily_limit = originalBudgetData.daily_limit;
 			category_budgets = [
@@ -148,7 +150,12 @@
 					amount: originalBudgetData.entertainment_budget,
 					id: 4
 				},
-				{ category: 'others_budget', amount: originalBudgetData.others_budget, id: 5 }
+				{ category: 'others_budget', amount: originalBudgetData.others_budget, id: 5 },
+				{
+					category: 'bills_budget',
+					amount: originalBudgetData.bills_budget,
+					id: 6
+				}
 			].filter((item) => item.amount > 0);
 		}
 	}
@@ -217,7 +224,8 @@
 					{ category: 'transportation_budget', amount: budget.transportation_budget, id: 2 },
 					{ category: 'utilities_budget', amount: budget.utilities_budget, id: 3 },
 					{ category: 'entertainment_budget', amount: budget.entertainment_budget, id: 4 },
-					{ category: 'others_budget', amount: budget.others_budget, id: 5 }
+					{ category: 'others_budget', amount: budget.others_budget, id: 5 },
+					{ category: 'bills_budget', amount: budget.bills_budget, id: 6 }
 				].filter((item) => item.amount > 0);
 
 				hasExistingBudget = true;
@@ -241,7 +249,8 @@
 			transportation_budget: 0,
 			utilities_budget: 0,
 			entertainment_budget: 0,
-			others_budget: 0
+			others_budget: 0,
+			bills_budget: 0
 		};
 
 		category_budgets.forEach((item) => {
@@ -281,7 +290,8 @@
 			transportation_budget: 0,
 			utilities_budget: 0,
 			entertainment_budget: 0,
-			others_budget: 0
+			others_budget: 0,
+			bills_budget: 0
 		};
 
 		category_budgets.forEach((item) => {
