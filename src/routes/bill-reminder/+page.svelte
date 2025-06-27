@@ -112,7 +112,7 @@
 						due_date: nextDueDate,
 						recurring_bill: true,
 						isPaid: false,
-						paid_date: null
+						paid_date
 					})
 				});
 			}
