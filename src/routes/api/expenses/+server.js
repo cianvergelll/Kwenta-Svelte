@@ -32,12 +32,15 @@ export async function POST({ request, locals }) {
     try {
         const { expense_amount, expense_category, expense_note } = await request.json();
 
-        await pool.query(
+        const [result] = await pool.query(
             'INSERT INTO expenses (user_id, expense_amount, expense_category, expense_note) VALUES (?, ?, ?, ?)',
             [locals.user.id, expense_amount, expense_category, expense_note]
         );
 
-        return new Response(JSON.stringify({ message: 'Expense added' }), {
+        return new Response(JSON.stringify({
+            message: 'Expense added',
+            id: result.insertId
+        }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
         });

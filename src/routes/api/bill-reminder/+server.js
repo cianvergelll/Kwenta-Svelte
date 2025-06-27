@@ -18,7 +18,8 @@ export async function GET({ locals }) {
             due_date: row.due_date,
             recurring_bill: row.recurring_bill,
             isPaid: row.isPaid,
-            paid_date: row.paid_date
+            paid_date: row.paid_date,
+            expense_id: row.expense_id
         }));
 
         return new Response(JSON.stringify(formattedRows), {
@@ -42,11 +43,11 @@ export async function POST({ request, locals }) {
     }
 
     try {
-        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date } = await request.json();
+        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id } = await request.json();
 
         await pool.query(
-            'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date]
+            'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id]
 
         );
         return new Response(JSON.stringify({ message: 'Bill reminder added' }), {

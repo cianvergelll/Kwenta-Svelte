@@ -9,12 +9,12 @@ export async function PUT({ request, params, locals }) {
     }
 
     try {
-        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date } = await request.json();
+        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id } = await request.json();
 
 
         const [result] = await pool.query(
-            'UPDATE bills_reminder SET bill_title = ?, bill_amount = ?, due_date = ?, recurring_bill = ?, isPaid = ?, paid_date = ? WHERE id = ? AND user_id = ?',
-            [bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, params.id, locals.user.id]
+            'UPDATE bills_reminder SET bill_title = ?, bill_amount = ?, due_date = ?, recurring_bill = ?, isPaid = ?, paid_date = ?, expense_id = ? WHERE id = ? AND user_id = ?',
+            [bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id, params.id, locals.user.id]
         );
 
         if (result.affectedRows === 0) {

@@ -83,20 +83,34 @@
 
 	async function markAsPaid(bill) {
 		try {
-			// First, mark the current bill as paid
+			const expenseRes = await fetch('api/expenses', {
+				method: 'POST',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					expense_amount: bill.bill_amount,
+					expense_category: 'Bills',
+					expense_note: bill.bill_title
+				})
+			});
+
+			if (!expenseRes.ok) throw new Error('Failed to create expense');
+
+			const expenseData = await expenseRes.json();
+			console.log('New expense ID:', expenseData.id);
+			const expenseId = expenseData.id;
 			const res = await fetch(`/api/bill-reminder/${bill.id}`, {
 				method: 'PUT',
 				headers: await getAuthHeaders(),
 				body: JSON.stringify({
 					...bill,
 					isPaid: 1,
-					paid_date: new Date().toISOString().split('T')[0]
+					paid_date: new Date().toISOString().split('T')[0],
+					expense_id: expenseData.id
 				})
 			});
 
 			if (!res.ok) throw new Error('Failed to mark as paid');
 
-			// If it's a recurring bill, create a new bill with next month's due date
 			if (bill.recurring_bill) {
 				const currentDueDate = new Date(bill.due_date);
 				const nextDueDate = new Date(currentDueDate.setMonth(currentDueDate.getMonth() + 1))
@@ -112,7 +126,8 @@
 						due_date: nextDueDate,
 						recurring_bill: true,
 						isPaid: false,
-						paid_date
+						paid_date: null,
+						expense_id: null
 					})
 				});
 			}
@@ -136,9 +151,18 @@
 				})
 			});
 
-			if (res.ok) {
-				await loadBills();
+			if (!res.ok) throw new Error('Failed to mark as paid');
+
+			if (bill.expense_id) {
+				const deleteRes = await fetch(`/api/expenses/${bill.expense_id}`, {
+					method: 'DELETE',
+					headers: await getAuthHeaders()
+				});
+
+				if (!deleteRes.ok) throw new Error('Failed to remove expense');
 			}
+
+			await loadBills();
 		} catch (error) {
 			console.error('Error marking bill as unpaid:', error);
 		}
