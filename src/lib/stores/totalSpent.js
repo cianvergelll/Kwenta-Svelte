@@ -6,7 +6,6 @@ const storedTotal = typeof localStorage !== 'undefined' ?
 
 export const totalSpent = writable(storedTotal);
 
-// Persist to localStorage on changes (only in browser)
 if (typeof localStorage !== 'undefined') {
     totalSpent.subscribe(value => {
         localStorage.setItem('totalSpent', value.toString());

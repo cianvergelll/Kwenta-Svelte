@@ -29,6 +29,7 @@ export async function GET({ locals }) {
             SELECT 
                 CASE expense_category
                     WHEN 'other' THEN 'others_budget'
+                    WHEN 'bills' THEN 'bill_budget'
                     ELSE CONCAT(expense_category, '_budget')
                 END as category,
                 SUM(expense_amount) as total
@@ -45,7 +46,8 @@ export async function GET({ locals }) {
             transportation_budget: 0,
             utilities_budget: 0,
             entertainment_budget: 0,
-            others_budget: 0
+            others_budget: 0,
+            bill_budget: 0
         };
 
         rows.forEach(row => {

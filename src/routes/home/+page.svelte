@@ -13,12 +13,13 @@
 		{ name: 'transportation_budget', label: 'Transportation' },
 		{ name: 'utilities_budget', label: 'Utilities' },
 		{ name: 'entertainment_budget', label: 'Entertainment' },
-		{ name: 'others_budget', label: 'Others' }
+		{ name: 'others_budget', label: 'Others' },
+		{ name: 'bills_budget', label: 'Bill' }
 	];
 	let categorySpending = $state({});
 	let isEditMode = $state(false);
 	let sortDropdownOpen = $state(false);
-	let currentSortMethod = $state('date-desc'); // Default: newest first
+	let currentSortMethod = $state('date-desc');
 	let currentMonthExpenses = $state([]);
 
 	// Existing functions
@@ -62,6 +63,8 @@
 				return 'bg-gradient-to-r from-purple-500 to-purple-800';
 			case 'others_budget':
 				return 'bg-gradient-to-r from-gray-400 to-gray-700';
+			case 'bills':
+				return 'bg-gradient-to-r from-green-400 to-green-700';
 			default:
 				return 'bg-gray-50';
 		}
@@ -80,7 +83,6 @@
 	let daily_spent = $state(0);
 	let isOnPage = $state(false);
 
-	// ======== FIXED: Update totalSpent to only include current month ========
 	$effect(() => {
 		const now = new Date();
 		const currentMonth = now.getMonth();
