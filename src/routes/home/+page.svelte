@@ -497,7 +497,7 @@
 							<div class="relative">
 								<button
 									onclick={() => (sortDropdownOpen = !sortDropdownOpen)}
-									class="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+									class="mr-5 flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700"
 								>
 									Sort Expenses
 									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
