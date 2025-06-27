@@ -12,7 +12,7 @@
 		dataLabel?: string;
 		chartType?: ValidChartType;
 		onReload?: () => void;
-		expenses?: any[]; // Add expenses prop to filter by month
+		expenses?: any[];
 	}
 
 	let {
@@ -28,16 +28,15 @@
 	let canvas: HTMLCanvasElement | null = $state(null);
 	let chart: ChartJS | null = $state(null);
 
-	// Color scheme matching your expense categories
 	const categoryColors: Record<string, string> = {
-		food: 'rgba(236, 72, 153, 0.7)', // Pink
-		transportation: 'rgba(245, 158, 11, 0.7)', // Yellow
-		utilities: 'rgba(59, 130, 246, 0.7)', // Blue
-		entertainment: 'rgba(139, 92, 246, 0.7)', // Purple
-		other: 'rgba(156, 163, 175, 0.7)' // Gray
+		food: 'rgba(236, 72, 153, 0.7)',
+		transportation: 'rgba(245, 158, 11, 0.7)',
+		utilities: 'rgba(59, 130, 246, 0.7)',
+		entertainment: 'rgba(139, 92, 246, 0.7)',
+		other: 'rgba(156, 163, 175, 0.7)',
+		bills: 'rgba(34, 197, 94, 0.7)'
 	};
 
-	// ======= NEW: Filter expenses to current month ========
 	const getCurrentMonthExpenses = () => {
 		const now = new Date();
 		const currentMonth = now.getMonth();
@@ -49,7 +48,6 @@
 		});
 	};
 
-	// ======= MODIFIED: Process only current month's data ========
 	const processChartData = () => {
 		const currentMonthExpenses = getCurrentMonthExpenses();
 		const categoryMap: Record<string, number> = {};
@@ -77,7 +75,6 @@
 	const createChart = () => {
 		if (!canvas) return;
 
-		// Use processed current month data
 		const { labels, data } = processChartData();
 
 		const config: ChartConfiguration = {
@@ -135,7 +132,6 @@
 		createChart();
 	});
 
-	// ======= MODIFIED: Update with current month data ========
 	$effect(() => {
 		if (chart) {
 			const { labels, data } = processChartData();

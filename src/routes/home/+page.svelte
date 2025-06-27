@@ -575,7 +575,9 @@
 															? 'bg-gradient-to-r from-purple-500 to-purple-800'
 															: expense.expense_category === 'other'
 																? 'bg-gradient-to-r from-gray-400 to-gray-700'
-																: 'bg-gray-50'
+																: expense.expense_category === 'bills'
+																	? 'bg-gradient-to-r from-green-400 to-green-700'
+																	: 'bg-gray-50'
 										}
                   `}
 								>
