@@ -24,7 +24,15 @@ export async function GET({ request, locals }) {
             [locals.user.id, month, year]
         );
 
-        return json(rows);
+        const formattedRows = rows.map(row => ({
+            id: row.id,
+            date: row.date,
+            amount_spent: row.amount_spent,
+            daily_limit: row.daily_limit,
+            status: row.status
+        }));
+
+        return json(formattedRows);
     } catch (err) {
         console.error('GET Error:', err);
         return json({ error: err.message }, { status: 500 });
