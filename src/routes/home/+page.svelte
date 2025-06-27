@@ -14,7 +14,7 @@
 		{ name: 'utilities_budget', label: 'Utilities' },
 		{ name: 'entertainment_budget', label: 'Entertainment' },
 		{ name: 'others_budget', label: 'Others' },
-		{ name: 'bills_budget', label: 'Bill' }
+		{ name: 'bills_budget', label: 'Bills' }
 	];
 	let categorySpending = $state({});
 	let isEditMode = $state(false);
@@ -22,7 +22,6 @@
 	let currentSortMethod = $state('date-desc');
 	let currentMonthExpenses = $state([]);
 
-	// Existing functions
 	function removeBudget(id) {
 		category_budgets = category_budgets.filter((item) => item.id !== id);
 		if (category_budgets.length === 0 && !total_budget && !daily_limit) {
@@ -142,7 +141,7 @@
 			}
 
 			closeModal();
-			await loadExpenses(); // This will trigger $effect and update totalSpent correctly
+			await loadExpenses();
 			await fetchMonthlyCategoryExpenses();
 		} catch (error) {
 			console.error('Error updating expense:', error);
@@ -150,20 +149,16 @@
 		}
 	}
 
-	// New function to filter and sort expenses
 	function processAndSortExpenses() {
-		// Get current month and year
 		const now = new Date();
 		const currentMonth = now.getMonth();
 		const currentYear = now.getFullYear();
 
-		// Filter expenses to current month
 		currentMonthExpenses = expenses.filter((expense) => {
 			const expenseDate = new Date(expense.created_at || expense.date);
 			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
 		});
 
-		// Sort expenses based on current method
 		switch (currentSortMethod) {
 			case 'date-desc':
 				currentMonthExpenses.sort(
@@ -300,7 +295,7 @@
 
 			expenses = await res.json();
 			processExpenseData(expenses);
-			processAndSortExpenses(); // Process and sort after loading
+			processAndSortExpenses();
 		} catch (error) {
 			console.error('Error loading expenses:', error);
 			errorMessage = 'Network error';
@@ -357,6 +352,7 @@
 			errorMessage = 'Network error';
 		}
 	}
+
 	async function fetchExpenses() {
 		try {
 			const response = await fetch('/api/expenses');
@@ -489,13 +485,14 @@
 				{expenses}
 			/>
 		</div>
+
+		<!-- Expenses Display -->
 		<div class="h-[50%] w-full bg-white">
 			<div class="relative mt-3 flex h-full w-full flex-col items-center justify-center">
 				{#if isLoading && expenses.length === 0}
 					<div class="py-8 text-center">Loading expenses...</div>
 				{:else}
 					<div class="relative h-full w-full">
-						<!-- Add Sort Button Here -->
 						<div class="mb-3 flex justify-end pr-5">
 							<div class="relative">
 								<button
@@ -561,11 +558,11 @@
 
 						<ul
 							bind:this={expensesList}
-							class="my-3 flex max-h-65 w-full flex-col items-center space-y-4 overflow-y-auto pr-2"
+							class="my-3 flex max-h-65 w-full flex-col items-center overflow-y-auto pr-2"
 						>
-							{#each currentMonthExpenses as expense}
+							{#each currentMonthExpenses as expense (expense.id)}
 								<li
-									class={`flex w-[95%] items-center justify-between rounded-lg p-4 shadow
+									class={`mb-2 flex w-[95%] items-center justify-between rounded-lg p-3 shadow
                     ${
 											expense.expense_category === 'utilities'
 												? 'bg-gradient-to-r from-blue-500 to-blue-800'
@@ -583,30 +580,81 @@
 										}
                   `}
 								>
-									<div class="flex flex-col">
-										<span class="text-base text-white">
-											{expense.expense_category.charAt(0).toUpperCase() +
-												expense.expense_category.slice(1)}
-										</span>
-										<span class="text-2xl font-bold text-white">₱{expense.expense_amount}</span>
-										<span class="text-sm text-white">{expense.expense_note}</span>
-										<span class="text-xs text-white opacity-80">
-											{new Date(expense.created_at || expense.date).toLocaleDateString()}
-										</span>
+									<div class="flex items-center space-x-3">
+										<div class="h-3 w-3 rounded-full bg-white/50"></div>
+										<div class="flex flex-col">
+											<div class="flex items-center space-x-2">
+												<span class="text-sm font-medium text-white">
+													{expense.expense_category.charAt(0).toUpperCase() +
+														expense.expense_category.slice(1)}
+												</span>
+												<span class="text-xs text-white/80">
+													{new Date(expense.created_at || expense.date).toLocaleDateString(
+														'en-US',
+														{
+															month: 'short',
+															day: 'numeric'
+														}
+													)}
+												</span>
+											</div>
+											<span class="text-xs text-white/70">{expense.expense_note}</span>
+										</div>
 									</div>
-									<div class="flex flex-row justify-end space-x-2">
-										<button
-											class="rounded bg-yellow-500 px-3 py-1 text-white transition-colors hover:bg-yellow-600"
-											onclick={() => openEditModal(expense)}
-										>
-											Edit
-										</button>
-										<button
-											onclick={() => deleteExpense(expense.id)}
-											class="rounded bg-red-600 px-3 py-1 text-white transition-colors hover:bg-red-700"
-										>
-											Delete
-										</button>
+									<div class="flex items-center space-x-2">
+										<span class="text-sm font-bold text-white">₱{expense.expense_amount}</span>
+										<div class="flex space-x-1">
+											{#if expense.expense_category !== 'bills'}
+												<button
+													aria-label="Edit"
+													onclick={() => openEditModal(expense)}
+													class="p-1 text-white transition-colors hover:text-gray-200"
+													title="Edit"
+												>
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="16"
+														height="16"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+													>
+														<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+														></path>
+														<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+														></path>
+													</svg>
+												</button>
+											{/if}
+											<button
+												aria-label="Delete"
+												onclick={deleteExpense(expense.id)}
+												class="p-1 text-white transition-colors hover:text-gray-200"
+												title="Delete"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+												>
+													<polyline points="3 6 5 6 21 6"></polyline>
+													<path
+														d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+													></path>
+													<line x1="10" y1="11" x2="10" y2="17"></line>
+													<line x1="14" y1="11" x2="14" y2="17"></line>
+												</svg>
+											</button>
+										</div>
 									</div>
 								</li>
 							{/each}
