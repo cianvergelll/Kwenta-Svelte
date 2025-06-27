@@ -96,7 +96,6 @@
 			if (!expenseRes.ok) throw new Error('Failed to create expense');
 
 			const expenseData = await expenseRes.json();
-			console.log('New expense ID:', expenseData.id);
 			const expenseId = expenseData.id;
 			const res = await fetch(`/api/bill-reminder/${bill.id}`, {
 				method: 'PUT',
