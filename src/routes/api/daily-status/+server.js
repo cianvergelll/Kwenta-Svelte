@@ -20,7 +20,8 @@ export async function GET({ request, locals }) {
              FROM daily_status 
              WHERE user_id = ? 
              AND MONTH(date) = ? 
-             AND YEAR(date) = ?`,
+             AND YEAR(date) = ?
+             ORDER BY date`,
             [locals.user.id, month, year]
         );
 
@@ -56,8 +57,8 @@ export async function POST({ request, locals }) {
 
     try {
         await pool.query(
-            `INSERT INTO daily_status (user_id, date, amount_spent, daily_limit, status)
-             VALUES (?, ?, ?, ?, 
+            `INSERT INTO daily_status(user_id, date, amount_spent, daily_limit, status)
+             VALUES(?, ?, ?, ?,
                 CASE 
                     WHEN ? <= ? * 0.8 THEN 'on_track'
                     WHEN ? <= ? THEN 'caution'
@@ -65,8 +66,8 @@ export async function POST({ request, locals }) {
                 END)
              ON DUPLICATE KEY UPDATE
                 amount_spent = VALUES(amount_spent),
-                daily_limit = VALUES(daily_limit),
-                status = VALUES(status)`,
+            daily_limit = VALUES(daily_limit),
+            status = VALUES(status)`,
             [locals.user.id, date, amount_spent, daily_limit,
                 amount_spent, daily_limit, amount_spent, daily_limit]
         );

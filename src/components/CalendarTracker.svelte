@@ -29,21 +29,19 @@
 	});
 
 	function getStatusColor(date) {
-		// Create a LOCAL date object (ignoring timezone shifts)
-		const currentDateObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), date);
-
-		// Format as YYYY-MM-DD (timezone-neutral)
-		const dateStr = currentDateObj.toLocaleDateString('en-CA'); // 'en-CA' gives YYYY-MM-DD
-
-		// Match against fetched data
-		const status = dailyStatuses[dateStr];
+		// Create date string that matches API format exactly
+		const dateStr = [
+			currentDate.getFullYear(),
+			String(currentDate.getMonth() + 1).padStart(2, '0'),
+			String(date).padStart(2, '0')
+		].join('-');
 
 		return (
 			{
 				on_track: 'bg-green-500',
 				caution: 'bg-yellow-500',
 				overspending: 'bg-red-500'
-			}[status] || 'bg-gray-300'
+			}[dailyStatuses[dateStr]] || 'bg-gray-300'
 		);
 	}
 
@@ -52,11 +50,15 @@
 			const res = await fetch(`/api/daily-status?month=${month}&year=${year}`);
 			if (res.ok) {
 				const data = await res.json();
-				dailyStatuses = data.reduce((acc, item) => {
-					const dateStr = new Date(item.date).toISOString().split('T')[0];
-					acc[dateStr] = item.status;
-					return acc;
-				}, {});
+				const newStatuses = {};
+
+				// Process in correct order and ensure no date shifting
+				data.forEach((item) => {
+					// Use the date exactly as returned from API
+					newStatuses[item.date] = item.status;
+				});
+
+				dailyStatuses = newStatuses;
 			}
 		} catch (err) {
 			console.error('Error fetching daily status:', err);
