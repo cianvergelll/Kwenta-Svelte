@@ -1,31 +1,26 @@
 <script>
-	import { error } from '@sveltejs/kit';
 	import { goto } from '$app/navigation';
 	import SideNav from '../../components/Sidenav.svelte';
-	import { fade, slide } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	import { onMount } from 'svelte';
 	import { totalSpent } from '$lib/stores/totalSpent';
 	import CalendarTracker from '../../components/CalendarTracker.svelte';
 	import CategoryBudget from '../../components/CategoryBudget.svelte';
 
 	// State variables
-	let budget_plan = $state([]);
 	let errorMessage = $state('');
 	let daily_limit = $state(0);
 	let daily_spent = $state(0);
 	let total_budget = $state('');
-	let remaining_budget = $state(0);
 	let category_budgets = $state([]);
 	let selected_category = $state('food_budget');
 	let category_amount = $state('');
 	let has_data = $state(false);
-	let isLoading = $state(false);
 	let hasExistingBudget = $state(false);
 	let isEditMode = $state(false);
 	let originalBudgetData = $state(null);
 	let categorySpending = $state({});
 	let isOnPage = $state(true);
-	let currentDate = $state(new Date());
 
 	const categories = [
 		{ name: 'food_budget', label: 'Food' },
