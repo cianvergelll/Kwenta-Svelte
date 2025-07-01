@@ -7,6 +7,7 @@
 	import { totalSpent } from '../../lib/stores/totalSpent';
 	import CategoryBudget from '../../components/CategoryBudget.svelte';
 	import Button from '../../components/Button.svelte';
+	import Card from '../../components/Card.svelte';
 
 	let category_budgets = $state([]);
 	let categories = [
@@ -404,7 +405,7 @@
 	<div class="mx-auto flex h-[95%] w-[35%] flex-col">
 		<p class="mt-5 pl-5 text-2xl font-bold text-green-700">Good Day, User!<br /></p>
 		<p class="pl-5 text-green-700">Let's start your overseeing your expenses.</p>
-		<div class="my-auto h-[40%] rounded-xl bg-gradient-to-r from-green-600 to-green-800 shadow-xl">
+		<Card variant="primary" className="h-[40%] w-full my-auto">
 			<div class="flex h-full flex-col items-center justify-center">
 				<form
 					onsubmit={addExpense}
@@ -456,22 +457,22 @@
 					</div>
 				</form>
 			</div>
-		</div>
+		</Card>
 
-		<a
-			href="/budget-planner"
-			class="my-auto flex h-[40%] flex-col items-center justify-center overflow-hidden rounded-xl bg-white shadow-xl"
-			><div class="h-full w-full overflow-y-auto">
-				<CategoryBudget
-					{category_budgets}
-					{categories}
-					{categorySpending}
-					{isEditMode}
-					{removeBudget}
-					{getCategoryColor}
-					isOnPage={false}
-				/>
-			</div>
+		<a href="/budget-planner">
+			<Card variant="secondary" className="my-auto">
+				<div class="h-full w-full overflow-y-auto">
+					<CategoryBudget
+						{category_budgets}
+						{categories}
+						{categorySpending}
+						{isEditMode}
+						{removeBudget}
+						{getCategoryColor}
+						isOnPage={false}
+					/>
+				</div>
+			</Card>
 		</a>
 	</div>
 

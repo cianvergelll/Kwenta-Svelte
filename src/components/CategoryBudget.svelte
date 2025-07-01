@@ -65,7 +65,7 @@
 	</div>
 {:else}
 	<div class="w-full flex-1 p-4">
-		<div class="space-y-4">
+		<div class="space-y-4 overflow-y-auto">
 			{#each category_budgets as item (item.id)}
 				<div transition:fade class="w-full flex-1 p-1">
 					<div class="mb-1 flex items-center justify-between">
