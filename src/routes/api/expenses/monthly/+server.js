@@ -40,7 +40,6 @@ export async function GET({ locals }) {
             GROUP BY category
         `, [locals.user.id]);
 
-        // Standardize response format
         const categoryMap = {
             food_budget: 0,
             transportation_budget: 0,
