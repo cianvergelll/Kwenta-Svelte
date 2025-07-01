@@ -10,14 +10,14 @@
 
 	let classes = {
 		primary:
-			'w-[40%] rounded-lg bg-green-700 py-2 font-bold text-white transition duration-300 hover:bg-green-800',
+			'rounded-lg bg-green-700 py-2 font-bold text-white transition duration-300 hover:bg-green-800',
 		secondary:
-			'w-[40%] rounded-lg bg-white py-2 font-bold text-green-800 transition duration-300 hover:bg-green-700 hover:text-white',
+			'rounded-lg bg-white py-2 font-bold text-green-800 transition duration-300 hover:bg-green-700 hover:text-white',
 		danger:
-			'w-[40%] rounded-lg bg-red-500 py-2 font-bold text-white transition duration-300 hover:bg-red-600',
-		save: 'w-[40%] rounded-lg bg-blue-600 py-2 font-bold text-white transition duration-300 hover:bg-blue-700',
+			'rounded-lg bg-red-500 py-2 font-bold text-white transition duration-300 hover:bg-red-600',
+		save: 'rounded-lg bg-blue-600 py-2 font-bold text-white transition duration-300 hover:bg-blue-700',
 		update:
-			'w-[40%] rounded-lg bg-purple-600 py-2 font-bold text-white transition duration-300 hover:bg-purple-700'
+			'rounded-lg bg-purple-600 py-2 font-bold text-white transition duration-300 hover:bg-purple-700'
 	};
 </script>
 

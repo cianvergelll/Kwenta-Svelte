@@ -6,6 +6,7 @@
 	import Chart from '../../components/Chart.svelte';
 	import { totalSpent } from '../../lib/stores/totalSpent';
 	import CategoryBudget from '../../components/CategoryBudget.svelte';
+	import Button from '../../components/Button.svelte';
 
 	let category_budgets = $state([]);
 	let categories = [
@@ -444,13 +445,14 @@
 						required
 					/>
 					<div class="mr-15 flex w-full justify-end">
-						<button
+						<Button
+							ariaLabel="Add Expense"
 							type="submit"
-							preventdefault
-							class="w-[40%] rounded-lg bg-white py-2 font-bold text-green-800 transition duration-300 hover:bg-green-700 hover:text-white"
+							variant="secondary"
+							preventDefault={true}
+							className="w-[40%]"
+							action={addExpense}>Add Expense</Button
 						>
-							Add Expense
-						</button>
 					</div>
 				</form>
 			</div>
