@@ -11,7 +11,7 @@ export async function GET({ locals }) {
     try {
         // Check if month has changed
         const [monthCheck] = await pool.query(
-            `SELECT MAX(created_at) as last_date FROM expenses 
+            `SELECT MAX(created_at) as last_date FROM expenses
              WHERE user_id = ?`,
             [locals.user.id]
         );
