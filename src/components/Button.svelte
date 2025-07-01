@@ -21,6 +21,7 @@
 	};
 </script>
 
+<!-- svelte-ignore slot_element_deprecated -->
 <button
 	{type}
 	onclick={preventDefault
@@ -33,11 +34,6 @@
 	aria-label={ariaLabel}
 	data-variant={variant}
 >
-	{#if variant === 'save'}
-		Save
-	{:else if variant === 'update'}
-		Update
-	{:else}
-		Add Expense
-	{/if}
+	{ariaLabel}
+	<slot />
 </button>

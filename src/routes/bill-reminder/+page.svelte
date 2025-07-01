@@ -3,6 +3,7 @@
 	import BillModal from '../../components/BillModal.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import Button from '../../components/Button.svelte';
 
 	let bills = $state([]);
 	let bill_title = $state('');
@@ -381,11 +382,12 @@
 							</label>
 						</div>
 
-						<button
+						<Button
 							type="submit"
-							class="mt-auto flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
+							variant="primary"
+							ariaLabel="Add Bill"
+							className="flex items-center justify-center gap-2"
 						>
-							Add reminder
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="h-5 w-5"
@@ -400,7 +402,7 @@
 									d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a1 1 0 10-2 0v.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
 								/>
 							</svg>
-						</button>
+						</Button>
 					</form>
 				</div>
 			</div>

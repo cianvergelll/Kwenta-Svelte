@@ -1,4 +1,6 @@
 <script>
+	import Button from './Button.svelte';
+
 	export let showModal;
 	export const editingExpenses = null;
 	export let modalCategory;
@@ -88,20 +90,20 @@
 			</div>
 
 			<div class="flex justify-end space-x-2">
-				<button
+				<Button
+					ariaLabel="Cancel"
 					type="button"
-					on:click={closeModal}
-					class="rounded bg-white px-4 py-2 text-gray-800 hover:bg-gray-100"
+					variant="danger"
+					action={closeModal}
+					className="w-[20%]">Cancel</Button
 				>
-					Cancel
-				</button>
-				<button
+				<Button
+					ariaLabel="Save"
 					type="button"
-					on:click={saveExpense}
-					class="rounded bg-white px-4 py-2 text-gray-800 hover:bg-gray-100"
-				>
-					Save
-				</button>
+					variant="save"
+					action={saveExpense}
+					className="w-[20%]"
+				></Button>
 			</div>
 		</div>
 	</div>
