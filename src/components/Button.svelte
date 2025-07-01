@@ -4,13 +4,40 @@
 		type = 'button',
 		className = '',
 		variant = 'primary',
-		action = () => {}
+		action = () => {},
+		preventDefault = false
 	} = $props();
 
 	let classes = {
-		primary: 'bg-blue-500 hover:bg-blue-600 text-white',
-		secondary: 'bg-gray-500 hover:bg-gray-600 text-white'
+		primary:
+			'w-[40%] rounded-lg bg-green-700 py-2 font-bold text-white transition duration-300 hover:bg-green-800',
+		secondary:
+			'w-[40%] rounded-lg bg-white py-2 font-bold text-green-800 transition duration-300 hover:bg-green-700 hover:text-white',
+		danger:
+			'w-[40%] rounded-lg bg-red-500 py-2 font-bold text-white transition duration-300 hover:bg-red-600',
+		save: 'w-[40%] rounded-lg bg-blue-600 py-2 font-bold text-white transition duration-300 hover:bg-blue-700',
+		update:
+			'w-[40%] rounded-lg bg-purple-600 py-2 font-bold text-white transition duration-300 hover:bg-purple-700'
 	};
 </script>
 
-<button onclick={action} class={className} aria-label={ariaLabel} data-variant={variant}> </button>
+<button
+	{type}
+	onclick={preventDefault
+		? (e) => {
+				e.preventDefault();
+				action();
+			}
+		: action}
+	class={`${classes[variant]} ${className}`}
+	aria-label={ariaLabel}
+	data-variant={variant}
+>
+	{#if variant === 'save'}
+		Save
+	{:else if variant === 'update'}
+		Update
+	{:else}
+		Add Expense
+	{/if}
+</button>
