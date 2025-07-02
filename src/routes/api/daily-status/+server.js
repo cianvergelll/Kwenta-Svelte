@@ -57,19 +57,12 @@ export async function POST({ request, locals }) {
 
     try {
         await pool.query(
-            `INSERT INTO daily_status(user_id, date, amount_spent, daily_limit, status)
-             VALUES(?, ?, ?, ?,
-                CASE 
-                    WHEN ? <= ? * 0.8 THEN 'on_track'
-                    WHEN ? <= ? THEN 'caution'
-                    ELSE 'overspending'
-                END)
+            `INSERT INTO daily_status(user_id, date, amount_spent, daily_limit)
+             VALUES(?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                 amount_spent = VALUES(amount_spent),
-            daily_limit = VALUES(daily_limit),
-            status = VALUES(status)`,
-            [locals.user.id, date, amount_spent, daily_limit,
-                amount_spent, daily_limit, amount_spent, daily_limit]
+                daily_limit = VALUES(daily_limit)`,
+            [locals.user.id, date, amount_spent, daily_limit]
         );
 
         return json({ success: true });

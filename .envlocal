@@ -1,0 +1,7 @@
+//use process.envlocal.DB_HOST and etc. if using local database
+
+DB_HOST = localhost
+DB_USER = root
+DB_NAME = kwenta_db
+DB_CONNECTION_LIMIT = 10
+DB_QUEUE_LIMIT = 0

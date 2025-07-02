@@ -43,18 +43,21 @@ export async function POST({ request, locals }) {
     }
 
     try {
-        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id } = await request.json();
+        const requestData = await request.json();
 
-        await pool.query(
+        const { bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id } = requestData; // Use the parsed data
+
+        const result = await pool.query(
             'INSERT INTO bills_reminder (user_id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date, expense_id]
-
+            [locals.user.id, bill_title, bill_amount, due_date, recurring_bill, isPaid, paid_date || null, expense_id || null]
         );
+
         return new Response(JSON.stringify({ message: 'Bill reminder added' }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
+        console.error('Full POST error:', error);
         return new Response(JSON.stringify({ error: 'Failed to add bill reminder' }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
