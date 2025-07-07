@@ -38,6 +38,7 @@
 		<li class={`${tabs} mt-3`}><a href="/home">Expenses</a></li>
 		<li class={tabs}><a href="/budget-planner">Budget Planner</a></li>
 		<li class={tabs}><a href="/bill-reminder">Bills Reminder</a></li>
+		<li class={tabs}><a href="/saving-goals">Saving-Goals</a></li>
 		<li class={tabs}><a href="/history">History</a></li>
 		<li class={tabs}><a href="foo">Notifications</a></li>
 		<li class={`${tabs} mt-55`}><a href="foo">Settings</a></li>
