@@ -13,6 +13,7 @@
 		chartType?: ValidChartType;
 		onReload?: () => void;
 		expenses?: any[];
+		timeframe?: 'daily' | 'monthly';
 	}
 
 	let {
@@ -22,7 +23,8 @@
 		dataLabel = 'Amount',
 		chartType = 'bar',
 		onReload,
-		expenses = [] // Initialize with empty array
+		expenses = [],
+		timeframe = 'monthly'
 	} = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
@@ -37,36 +39,49 @@
 		bills: 'rgba(34, 197, 94, 0.7)'
 	};
 
-	const getCurrentMonthExpenses = () => {
-		const now = new Date();
-		const currentMonth = now.getMonth();
-		const currentYear = now.getFullYear();
+	const getFilteredExpenses = () => {
+    const now = new Date();
+    const currentDay = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-		return expenses.filter((expense) => {
-			const expenseDate = new Date(expense.created_at || expense.date);
-			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-		});
-	};
+    return expenses.filter((expense) => {
+        const expenseDate = new Date(expense.created_at || expense.date);
+        
+        if (timeframe === 'daily') {
+            return (
+                expenseDate.getDate() === currentDay &&
+                expenseDate.getMonth() === currentMonth &&
+                expenseDate.getFullYear() === currentYear
+            );
+        } else { // monthly
+            return (
+                expenseDate.getMonth() === currentMonth &&
+                expenseDate.getFullYear() === currentYear
+            );
+        }
+    });
+};
 
 	const processChartData = () => {
-		const currentMonthExpenses = getCurrentMonthExpenses();
-		const categoryMap: Record<string, number> = {};
+    const filteredExpenses = getFilteredExpenses();
+    const categoryMap: Record<string, number> = {};
 
-		currentMonthExpenses.forEach((expense) => {
-			const category = expense.expense_category;
-			const amount = parseFloat(expense.expense_amount);
+    filteredExpenses.forEach((expense) => {
+        const category = expense.expense_category;
+        const amount = parseFloat(expense.expense_amount);
 
-			if (!categoryMap[category]) {
-				categoryMap[category] = 0;
-			}
-			categoryMap[category] += amount;
-		});
+        if (!categoryMap[category]) {
+            categoryMap[category] = 0;
+        }
+        categoryMap[category] += amount;
+    });
 
-		return {
-			labels: Object.keys(categoryMap),
-			data: Object.values(categoryMap)
-		};
-	};
+    return {
+        labels: Object.keys(categoryMap),
+        data: Object.values(categoryMap)
+    };
+};
 
 	const getBackgroundColors = (labels: string[]) => {
 		return labels.map((label) => categoryColors[label.toLowerCase()] || 'rgba(75, 192, 192, 0.7)');

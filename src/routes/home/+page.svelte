@@ -22,7 +22,22 @@
 	let isEditMode = $state(false);
 	let sortDropdownOpen = $state(false);
 	let currentSortMethod = $state('date-desc');
-	let currentMonthExpenses = $state([]);
+	let currentExpenses = $state([]);
+	let expenses = $state([]);
+	let expense_amount = $state('');
+	let expense_category = $state('');
+	let expense_note = $state('');
+	let errorMessage = $state('');
+	let isLoading = $state(false);
+	let expensesList = $state(null);
+	let originalBudgetData = $state(null);
+	let total_budget = $state('');
+	let daily_limit = $state('');
+	let daily_spent = $state(0);
+	let isOnPage = $state(false);
+	let timeframe = $state('monthly');
+	let chartLabels = $state([]);
+	let chartData = $state([]);
 
 	function removeBudget(id) {
 		category_budgets = category_budgets.filter((item) => item.id !== id);
@@ -71,33 +86,33 @@
 		}
 	}
 
-	let expenses = $state([]);
-	let expense_amount = $state('');
-	let expense_category = $state('');
-	let expense_note = $state('');
-	let errorMessage = $state('');
-	let isLoading = $state(false);
-	let expensesList = $state(null);
-	let originalBudgetData = $state(null);
-	let total_budget = $state('');
-	let daily_limit = $state('');
-	let daily_spent = $state(0);
-	let isOnPage = $state(false);
-
 	$effect(() => {
 		const now = new Date();
+		const currentDay = now.getDate();
 		const currentMonth = now.getMonth();
 		const currentYear = now.getFullYear();
 
-		const currentMonthTotal = expenses
-			.filter((expense) => {
+		if (timeframe === 'daily') {
+			currentExpenses = expenses.filter((expense) => {
+				const expenseDate = new Date(expense.created_at || expense.date);
+				return (
+					expenseDate.getDate() === currentDay &&
+					expenseDate.getMonth() === currentMonth &&
+					expenseDate.getFullYear() === currentYear
+				);
+			});
+		} else {
+			currentExpenses = expenses.filter((expense) => {
 				const expenseDate = new Date(expense.created_at || expense.date);
 				return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-			})
-			.reduce((sum, expense) => sum + Number(expense.expense_amount), 0)
-			.toFixed(2);
+			});
+		}
 
-		$totalSpent = currentMonthTotal;
+		const total = currentExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
+		$totalSpent = total;
+
+		processAndSortExpenses();
+		processExpenseData(currentExpenses);
 	});
 
 	let showModal = $state(false);
@@ -152,44 +167,35 @@
 	}
 
 	function processAndSortExpenses() {
-		const now = new Date();
-		const currentMonth = now.getMonth();
-		const currentYear = now.getFullYear();
-
-		currentMonthExpenses = expenses.filter((expense) => {
-			const expenseDate = new Date(expense.created_at || expense.date);
-			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-		});
-
 		switch (currentSortMethod) {
 			case 'date-desc':
-				currentMonthExpenses.sort(
+				currentExpenses.sort(
 					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
 				);
 				break;
 			case 'date-asc':
-				currentMonthExpenses.sort(
+				currentExpenses.sort(
 					(a, b) => new Date(a.created_at || a.date) - new Date(b.created_at || b.date)
 				);
 				break;
 			case 'amount-desc':
-				currentMonthExpenses.sort(
+				currentExpenses.sort(
 					(a, b) => parseFloat(b.expense_amount) - parseFloat(a.expense_amount)
 				);
 				break;
 			case 'amount-asc':
-				currentMonthExpenses.sort(
+				currentExpenses.sort(
 					(a, b) => parseFloat(a.expense_amount) - parseFloat(b.expense_amount)
 				);
 				break;
 			case 'category-asc':
-				currentMonthExpenses.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
+				currentExpenses.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
 				break;
 			case 'category-desc':
-				currentMonthExpenses.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
+				currentExpenses.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
 				break;
 			default:
-				currentMonthExpenses.sort(
+				currentExpenses.sort(
 					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
 				);
 		}
@@ -296,7 +302,6 @@
 			}
 
 			expenses = await res.json();
-			processExpenseData(expenses);
 			processAndSortExpenses();
 		} catch (error) {
 			console.error('Error loading expenses:', error);
@@ -355,20 +360,6 @@
 		}
 	}
 
-	async function fetchExpenses() {
-		try {
-			const response = await fetch('/api/expenses');
-			if (!response.ok) throw new Error('Failed to fetch expenses');
-			return await response.json();
-		} catch (error) {
-			console.error('Error fetching expenses:', error);
-			return [];
-		}
-	}
-
-	let chartLabels = $state([]);
-	let chartData = $state([]);
-
 	function processExpenseData(expenses) {
 		const categoryMap = {};
 
@@ -386,13 +377,6 @@
 		chartData = Object.values(categoryMap);
 	}
 
-	function reloadChart() {
-		fetchExpenses().then((data) => {
-			expenses = data;
-			processExpenseData(expenses);
-		});
-	}
-
 	const inputStyle =
 		'w-[90%] py-2 border border-white rounded-lg pl-4 mb-2 text-white placeholder:text-white';
 </script>
@@ -408,7 +392,6 @@
 		<Card variant="primary" className="h-[40%] w-full my-auto">
 			<div class="flex h-full flex-col items-center justify-center">
 				<form
-					onsubmit={addExpense}
 					class="flex h-full w-full flex-col items-center justify-center space-y-4"
 				>
 					<label for="expense-amount" class="text-m mb-2 self-start pl-[5%] text-white"
@@ -450,9 +433,9 @@
 							ariaLabel="Add Expense"
 							type="submit"
 							variant="secondary"
-							preventDefault={true}
+							preventDefault={false}
 							className="w-[40%]"
-							action={addExpense}>Add Expense</Button
+							action={addExpense}></Button
 						>
 					</div>
 				</form>
@@ -476,20 +459,43 @@
 		</a>
 	</div>
 
+
+	<!-- Expense Breakdown Div -->
 	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white">
+		<div class="flex justify-center space-x-4 p-4">
+			<label class="inline-flex items-center">
+				<input
+					type="radio"
+					name="timeframe"
+					value="daily"
+					checked={timeframe === 'daily'}
+					onchange={() => (timeframe = 'daily')}
+					class="mr-2"
+				/>
+				<span class="text-gray-700">Daily</span>
+			</label>
+			<label class="inline-flex items-center">
+				<input
+					type="radio"
+					name="timeframe"
+					value="monthly"
+					checked={timeframe === 'monthly'}
+					onchange={() => (timeframe = 'monthly')}
+					class="mr-2"
+				/>
+				<span class="text-gray-700">Monthly</span>
+			</label>
+		</div>
 		<div class="h-[50%] w-full">
 			<Chart
-				title="Expense Breakdown"
-				{chartLabels}
-				{chartData}
+				title={timeframe === 'daily' ? "Today's Expenses" : "Monthly Expenses"}
+				{timeframe}
 				dataLabel="Amount Spent"
 				chartType="bar"
-				onReload={reloadChart}
 				{expenses}
 			/>
 		</div>
 
-		<!-- Expenses Display -->
 		<div class="h-[50%] w-full bg-white">
 			<div class="relative mt-3 flex h-full w-full flex-col items-center justify-center">
 				{#if isLoading && expenses.length === 0}
@@ -563,7 +569,7 @@
 							bind:this={expensesList}
 							class="my-3 flex max-h-65 w-full flex-col items-center overflow-y-auto pr-2"
 						>
-							{#each currentMonthExpenses as expense (expense.id)}
+							{#each currentExpenses as expense (expense.id)}
 								<li
 									class={`mb-2 flex w-[95%] items-center justify-between rounded-lg p-3 shadow
                     ${
@@ -666,7 +672,7 @@
 							{/each}
 						</ul>
 						<h1 class="text-center text-xl font-bold text-green-600">
-							TOTAL MONEY SPENT THIS MONTH: ₱ {$totalSpent}
+							TOTAL MONEY SPENT {timeframe === 'daily' ? 'TODAY' : 'THIS MONTH'}: ₱ {$totalSpent}
 						</h1>
 					</div>
 				{/if}
