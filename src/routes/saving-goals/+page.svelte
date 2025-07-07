@@ -21,4 +21,6 @@
 	<div class="ml-5 flex h-[95%] w-1/5 flex-col rounded-xl shadow-lg">
 		<Sidenav />
 	</div>
+
+	<div class="mx-auto flex h-[95%] w-[35%] flex-col overflow-hidden rounded-lg border border-gray-300 bg-white p-4"></div>
 </div>
