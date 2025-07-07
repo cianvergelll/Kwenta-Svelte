@@ -22,22 +22,7 @@
 	let isEditMode = $state(false);
 	let sortDropdownOpen = $state(false);
 	let currentSortMethod = $state('date-desc');
-	let currentExpenses = $state([]);
-	let expenses = $state([]);
-	let expense_amount = $state('');
-	let expense_category = $state('');
-	let expense_note = $state('');
-	let errorMessage = $state('');
-	let isLoading = $state(false);
-	let expensesList = $state(null);
-	let originalBudgetData = $state(null);
-	let total_budget = $state('');
-	let daily_limit = $state('');
-	let daily_spent = $state(0);
-	let isOnPage = $state(false);
-	let timeframe = $state('monthly');
-	let chartLabels = $state([]);
-	let chartData = $state([]);
+	let currentExpenses = $state([]); // Renamed from currentMonthExpenses to be timeframe agnostic
 
 	function removeBudget(id) {
 		category_budgets = category_budgets.filter((item) => item.id !== id);
@@ -86,33 +71,54 @@
 		}
 	}
 
+	let expenses = $state([]);
+	let expense_amount = $state('');
+	let expense_category = $state('');
+	let expense_note = $state('');
+	let errorMessage = $state('');
+	let isLoading = $state(false);
+	let expensesList = $state(null);
+	let originalBudgetData = $state(null);
+	let total_budget = $state('');
+	let daily_limit = $state('');
+	let daily_spent = $state(0);
+	let isOnPage = $state(false);
+	let timeframe = $state('monthly'); // 'daily' or 'monthly'
+
 	$effect(() => {
 		const now = new Date();
-		const currentDay = now.getDate();
-		const currentMonth = now.getMonth();
-		const currentYear = now.getFullYear();
+		let filteredExpenses = [];
 
 		if (timeframe === 'daily') {
-			currentExpenses = expenses.filter((expense) => {
+			// Filter for today's expenses
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			
+			filteredExpenses = expenses.filter((expense) => {
 				const expenseDate = new Date(expense.created_at || expense.date);
-				return (
-					expenseDate.getDate() === currentDay &&
-					expenseDate.getMonth() === currentMonth &&
-					expenseDate.getFullYear() === currentYear
-				);
+				return expenseDate >= today;
 			});
+
+			// Update total spent for today
+			const dailyTotal = filteredExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
+			$totalSpent = dailyTotal;
 		} else {
-			currentExpenses = expenses.filter((expense) => {
+			// Monthly filtering (existing logic)
+			const currentMonth = now.getMonth();
+			const currentYear = now.getFullYear();
+
+			filteredExpenses = expenses.filter((expense) => {
 				const expenseDate = new Date(expense.created_at || expense.date);
 				return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
 			});
+
+			// Update total spent for month
+			const monthlyTotal = filteredExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
+			$totalSpent = monthlyTotal;
 		}
 
-		const total = currentExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
-		$totalSpent = total;
-
-		processAndSortExpenses();
-		processExpenseData(currentExpenses);
+		// Process sorting
+		processAndSortExpenses(filteredExpenses);
 	});
 
 	let showModal = $state(false);
@@ -166,44 +172,46 @@
 		}
 	}
 
-	function processAndSortExpenses() {
+	function processAndSortExpenses(expensesToProcess) {
 		switch (currentSortMethod) {
 			case 'date-desc':
-				currentExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
 				);
 				break;
 			case 'date-asc':
-				currentExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => new Date(a.created_at || a.date) - new Date(b.created_at || b.date)
 				);
 				break;
 			case 'amount-desc':
-				currentExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => parseFloat(b.expense_amount) - parseFloat(a.expense_amount)
 				);
 				break;
 			case 'amount-asc':
-				currentExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => parseFloat(a.expense_amount) - parseFloat(b.expense_amount)
 				);
 				break;
 			case 'category-asc':
-				currentExpenses.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
+				expensesToProcess.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
 				break;
 			case 'category-desc':
-				currentExpenses.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
+				expensesToProcess.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
 				break;
 			default:
-				currentExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
 				);
 		}
+
+		currentExpenses = expensesToProcess;
 	}
 
 	function handleSort(method) {
 		currentSortMethod = method;
-		processAndSortExpenses();
+		processAndSortExpenses([...currentExpenses]);
 		sortDropdownOpen = false;
 	}
 
@@ -302,7 +310,9 @@
 			}
 
 			expenses = await res.json();
-			processAndSortExpenses();
+			processExpenseData(expenses);
+			// Trigger the effect to filter expenses
+			timeframe = timeframe; // Force re-evaluation
 		} catch (error) {
 			console.error('Error loading expenses:', error);
 			errorMessage = 'Network error';
@@ -360,10 +370,36 @@
 		}
 	}
 
+	async function fetchExpenses() {
+		try {
+			const response = await fetch('/api/expenses');
+			if (!response.ok) throw new Error('Failed to fetch expenses');
+			return await response.json();
+		} catch (error) {
+			console.error('Error fetching expenses:', error);
+			return [];
+		}
+	}
+
+	let chartLabels = $state([]);
+	let chartData = $state([]);
+
 	function processExpenseData(expenses) {
 		const categoryMap = {};
+		const now = new Date();
 
 		expenses.forEach((expense) => {
+			const expenseDate = new Date(expense.created_at || expense.date);
+			
+			// Apply timeframe filter
+			if (timeframe === 'daily') {
+				const today = new Date();
+				today.setHours(0, 0, 0, 0);
+				if (expenseDate < today) return;
+			} else {
+				if (expenseDate.getMonth() !== now.getMonth() || expenseDate.getFullYear() !== now.getFullYear()) return;
+			}
+
 			const category = expense.expense_category;
 			const amount = parseFloat(expense.expense_amount);
 
@@ -375,6 +411,13 @@
 
 		chartLabels = Object.keys(categoryMap);
 		chartData = Object.values(categoryMap);
+	}
+
+	function reloadChart() {
+		fetchExpenses().then((data) => {
+			expenses = data;
+			processExpenseData(expenses);
+		});
 	}
 
 	const inputStyle =
@@ -392,6 +435,7 @@
 		<Card variant="primary" className="h-[40%] w-full my-auto">
 			<div class="flex h-full flex-col items-center justify-center">
 				<form
+					onsubmit={addExpense}
 					class="flex h-full w-full flex-col items-center justify-center space-y-4"
 				>
 					<label for="expense-amount" class="text-m mb-2 self-start pl-[5%] text-white"
@@ -459,8 +503,6 @@
 		</a>
 	</div>
 
-
-	<!-- Expense Breakdown Div -->
 	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white">
 		<div class="flex justify-center space-x-4 p-4">
 			<label class="inline-flex items-center">
@@ -468,8 +510,7 @@
 					type="radio"
 					name="timeframe"
 					value="daily"
-					checked={timeframe === 'daily'}
-					onchange={() => (timeframe = 'daily')}
+					bind:group={timeframe}
 					class="mr-2"
 				/>
 				<span class="text-gray-700">Daily</span>
@@ -479,8 +520,7 @@
 					type="radio"
 					name="timeframe"
 					value="monthly"
-					checked={timeframe === 'monthly'}
-					onchange={() => (timeframe = 'monthly')}
+					bind:group={timeframe}
 					class="mr-2"
 				/>
 				<span class="text-gray-700">Monthly</span>
@@ -488,14 +528,17 @@
 		</div>
 		<div class="h-[50%] w-full">
 			<Chart
-				title={timeframe === 'daily' ? "Today's Expenses" : "Monthly Expenses"}
-				{timeframe}
+				title={timeframe === 'daily' ? "Today's Expenses" : "Monthly Expense Breakdown"}
+				{chartLabels}
+				{chartData}
 				dataLabel="Amount Spent"
 				chartType="bar"
+				onReload={reloadChart}
 				{expenses}
 			/>
 		</div>
 
+		<!-- Expenses Display -->
 		<div class="h-[50%] w-full bg-white">
 			<div class="relative mt-3 flex h-full w-full flex-col items-center justify-center">
 				{#if isLoading && expenses.length === 0}
