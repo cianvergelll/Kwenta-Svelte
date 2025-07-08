@@ -83,14 +83,14 @@
 	let daily_limit = $state('');
 	let daily_spent = $state(0);
 	let isOnPage = $state(false);
-	let timeframe = $state('monthly'); // 'daily' or 'monthly'
+	let timeframe = $state('monthly');
+	let filteredExpenses = $state([]);
 
 	$effect(() => {
 		const now = new Date();
 		let filteredExpenses = [];
 
 		if (timeframe === 'daily') {
-			// Filter for today's expenses
 			const today = new Date();
 			today.setHours(0, 0, 0, 0);
 			
@@ -99,11 +99,9 @@
 				return expenseDate >= today;
 			});
 
-			// Update total spent for today
 			const dailyTotal = filteredExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
 			$totalSpent = dailyTotal;
 		} else {
-			// Monthly filtering (existing logic)
 			const currentMonth = now.getMonth();
 			const currentYear = now.getFullYear();
 
@@ -112,13 +110,12 @@
 				return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
 			});
 
-			// Update total spent for month
 			const monthlyTotal = filteredExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
 			$totalSpent = monthlyTotal;
 		}
 
-		// Process sorting
 		processAndSortExpenses(filteredExpenses);
+		processExpenseData(filteredExpenses);
 	});
 
 	let showModal = $state(false);
@@ -311,8 +308,7 @@
 
 			expenses = await res.json();
 			processExpenseData(expenses);
-			// Trigger the effect to filter expenses
-			timeframe = timeframe; // Force re-evaluation
+			timeframe = timeframe;
 		} catch (error) {
 			console.error('Error loading expenses:', error);
 			errorMessage = 'Network error';
@@ -385,40 +381,40 @@
 	let chartData = $state([]);
 
 	function processExpenseData(expenses) {
-		const categoryMap = {};
-		const now = new Date();
+    const categoryMap = {};
+    const now = new Date();
 
-		expenses.forEach((expense) => {
-			const expenseDate = new Date(expense.created_at || expense.date);
-			
-			// Apply timeframe filter
-			if (timeframe === 'daily') {
-				const today = new Date();
-				today.setHours(0, 0, 0, 0);
-				if (expenseDate < today) return;
-			} else {
-				if (expenseDate.getMonth() !== now.getMonth() || expenseDate.getFullYear() !== now.getFullYear()) return;
-			}
+    expenses.forEach((expense) => {
+        const expenseDate = new Date(expense.created_at || expense.date);
+        
+        // Filter based on timeframe
+        if (timeframe === 'daily') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (expenseDate < today) return;
+        } else { // monthly
+            if (expenseDate.getMonth() !== now.getMonth() || 
+                expenseDate.getFullYear() !== now.getFullYear()) {
+                return;
+            }
+        }
 
-			const category = expense.expense_category;
-			const amount = parseFloat(expense.expense_amount);
+        // Aggregate by category
+        const category = expense.expense_category;
+        const amount = parseFloat(expense.expense_amount);
 
-			if (!categoryMap[category]) {
-				categoryMap[category] = 0;
-			}
-			categoryMap[category] += amount;
-		});
+        if (!isNaN(amount)) {  // Ensure amount is a valid number
+            if (!categoryMap[category]) {
+                categoryMap[category] = 0;
+            }
+            categoryMap[category] += amount;
+        }
+    });
 
-		chartLabels = Object.keys(categoryMap);
-		chartData = Object.values(categoryMap);
-	}
-
-	function reloadChart() {
-		fetchExpenses().then((data) => {
-			expenses = data;
-			processExpenseData(expenses);
-		});
-	}
+    // Update chart data
+    chartLabels = Object.keys(categoryMap);
+    chartData = Object.values(categoryMap);
+}
 
 	const inputStyle =
 		'w-[90%] py-2 border border-white rounded-lg pl-4 mb-2 text-white placeholder:text-white';
@@ -435,7 +431,6 @@
 		<Card variant="primary" className="h-[40%] w-full my-auto">
 			<div class="flex h-full flex-col items-center justify-center">
 				<form
-					onsubmit={addExpense}
 					class="flex h-full w-full flex-col items-center justify-center space-y-4"
 				>
 					<label for="expense-amount" class="text-m mb-2 self-start pl-[5%] text-white"
@@ -528,13 +523,13 @@
 		</div>
 		<div class="h-[50%] w-full">
 			<Chart
-				title={timeframe === 'daily' ? "Today's Expenses" : "Monthly Expense Breakdown"}
-				{chartLabels}
-				{chartData}
-				dataLabel="Amount Spent"
-				chartType="bar"
-				onReload={reloadChart}
-				{expenses}
+  			title={timeframe === 'daily' ? "Today's Expenses" : "Monthly Expense Breakdown"}
+  			chartLabels={chartLabels}
+ 			chartData={chartData}
+  			dataLabel="Amount Spent"
+  			chartType="bar"
+  			expenses={expenses}
+  			timeframe={timeframe}
 			/>
 		</div>
 
