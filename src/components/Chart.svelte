@@ -22,7 +22,7 @@
 		dataLabel = 'Amount',
 		chartType = 'bar',
 		onReload,
-		expenses = [] // Initialize with empty array
+		expenses = []
 	} = $props();
 
 	let canvas: HTMLCanvasElement | null = $state(null);
