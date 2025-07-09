@@ -70,6 +70,39 @@
 			isLoading = false;
 		}
 	}
+
+	async function addSaving() {
+		errorMessage = '';
+		try {
+			const res = await fetch('/api/saving-goals', {
+				method: 'POST',
+				headers: await getAuthHeaders(),
+				body: JSON.stringify({
+					goal_title,
+					goal_amount,
+					current_amount,
+					goal_date,
+					isCompleted
+				})
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to add saving goal';
+				return;
+			}
+
+			goal_title = '';
+			goal_amount = '';
+			current_amount = 0;
+			goal_date = '';
+			isCompleted = false;
+			await loadBills();
+		} catch (error) {
+			console.error('Error adding saving goal:', error);
+			errorMessage = 'Failed to add saving goal';
+		}
+	}
 </script>
 
 <div class="flex h-screen w-screen items-center justify-start bg-gray-100">
