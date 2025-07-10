@@ -1,4 +1,3 @@
-<!-- src/components/Loading.svelte -->
 <script>
 	import { fade } from 'svelte/transition';
 	let progress = 0;
