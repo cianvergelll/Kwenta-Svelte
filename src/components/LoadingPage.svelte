@@ -105,4 +105,13 @@
 		top: calc(50% - 1.25em);
 		left: calc(50% - 1.25em);
 	}
+
+	.loader:before,
+	.loader:after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
 </style>
