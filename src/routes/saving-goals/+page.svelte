@@ -255,13 +255,43 @@
 						variant="primary"
 						ariaLabel="Add Saving Goal"
 						className="flex items-center justify-center gap-2"
-					>
-						Add Goal
-					</Button>
+					></Button>
 				</form>
 			</div>
 		</Card>
-		<Card variant="secondary" className="h-[45%] w-full my-auto"></Card>
+		<Card variant="secondary" className="h-[45%] w-full my-auto">
+			<h2
+				class="py- mx-auto mt-5 flex w-[92%] items-center justify-center rounded-md bg-gradient-to-r from-green-500 to-green-700 py-2 text-center text-lg font-semibold tracking-wide text-white"
+			>
+				SAVING GOALS
+			</h2>
+
+			{#each unCompleted as goal (goal.id)}
+				<div
+					class="mx-auto my-2 w-[90%] rounded-lg border border-gray-300 px-4 py-2 shadow-lg focus:ring-2 focus:ring-green-400 focus:outline-none"
+				>
+					<div class="flex items-center justify-between">
+						<h3 class="text-lg font-semibold text-gray-800">{goal.goal_title}</h3>
+						<button onclick={() => showSaving(goal.id)} aria-label="View Saving Goal">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke-width="1.5"
+								stroke="currentColor"
+								class="size-6"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+								/>
+							</svg>
+						</button>
+					</div>
+				</div>
+			{/each}
+		</Card>
 	</div>
 
 	<!-- Savings Display -->
