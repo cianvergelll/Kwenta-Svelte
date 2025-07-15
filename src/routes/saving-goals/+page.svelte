@@ -132,34 +132,55 @@
 		}
 	}
 
-	async function addToCurrentAmount() {
-		if (!selectedGoal || !topUpAmount) return;
+	async function loadTopups(goal) {
+		try {
+			const res = await fetch(`/api/saving-topup?goal_id=${goal.id}`, {
+				headers: await getAuthHeaders()
+			});
+
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to load top-ups';
+				return;
+			}
+
+			topups = await res.json();
+		} catch (error) {
+			console.error('Error loading top-ups:', error);
+			errorMessage = 'Failed to load top-ups';
+		}
+	}
+
+	async function addTopUp() {
+		console.log('Starting addTopUp');
+		errorMessage = '';
 
 		try {
-			const newAmount = parseFloat(selectedGoal.current_amount) + parseFloat(topUpAmount);
-			const res = await fetch(`/api/saving-goals/${selectedGoal.id}`, {
-				method: 'PATCH',
+			const res = await fetch('/api/saving-topup', {
+				method: 'POST',
 				headers: await getAuthHeaders(),
 				body: JSON.stringify({
-					current_amount: newAmount
+					goal_id: selectedGoal.id,
+					amount: topup_amount
 				})
 			});
 
 			if (!res.ok) {
 				const err = await res.json();
-				errorMessage = err.error || 'Failed to update amount';
+				errorMessage = err.error || 'Failed to add top-up';
 				return;
 			}
 
-			topUpAmount = '';
+			topup_amount = '';
+			await loadTopups(selectedGoal);
 			await loadSavings();
-			selectedGoal = goals.find((g) => g.id === selectedGoal.id); // Refresh selected goal
+
+			selectedGoal = goals.find((g) => g.id === selectedGoal.id);
 		} catch (error) {
-			console.error('Error updating amount:', error);
-			errorMessage = 'Failed to update amount';
+			console.error('Error adding top-up:', error);
+			errorMessage = 'Failed to add top-up';
 		}
 	}
-
 	function showSaving(id) {
 		selectedGoal = goals.find((goal) => goal.id === id);
 	}
@@ -379,9 +400,7 @@
 								min="0"
 								step="0.01"
 							/>
-							<Button on:click={addToCurrentAmount} variant="primary" className="px-4 py-2">
-								Top Up
-							</Button>
+							<Button action={addTopUp} variant="primary" className="px-4 py-2">Top Up</Button>
 						</div>
 					</div>
 
