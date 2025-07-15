@@ -17,8 +17,9 @@
 	let unCompleted = $state([]);
 	let currentSortMethod = $state('date-asc');
 	let sortDropdownOpen = $state(false);
-	let selectedGoal = $state(null); // Track the currently viewed goal
-	let topUpAmount = $state(''); // For the "Top Up" input
+	let selectedGoal = $state(null);
+	let topup_amount = $state('');
+	let topups = $state([]);
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -372,7 +373,7 @@
 						<div class="mt-6 flex gap-2">
 							<input
 								type="number"
-								bind:value={topUpAmount}
+								bind:value={topup_amount}
 								placeholder="Enter amount"
 								class="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-400 focus:outline-none"
 								min="0"
@@ -475,20 +476,3 @@
 		</Card>
 	</div>
 </div>
-
-<style>
-	progress {
-		-webkit-appearance: none;
-		appearance: none;
-		height: 8px;
-		border-radius: 4px;
-	}
-	progress::-webkit-progress-bar {
-		background-color: #e5e7eb;
-		border-radius: 4px;
-	}
-	progress::-webkit-progress-value {
-		background-color: #10b981;
-		border-radius: 4px;
-	}
-</style>
