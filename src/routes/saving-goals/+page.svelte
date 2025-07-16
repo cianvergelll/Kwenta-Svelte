@@ -376,7 +376,7 @@
 
 	<!-- Right Section: Goal Details + Top-Up History -->
 	<div class="mx-auto flex h-[95%] w-[35%] flex-col">
-		<Card variant="secondary" className="h-[95%] w-full my-auto overflow-y-auto">
+		<Card variant="secondary" className="h-[95%] w-full my-auto">
 			{#if selectedGoal}
 				<div class="p-6">
 					<h2 class="mb-4 text-xl font-semibold text-gray-800">GOAL DETAILS</h2>
@@ -510,7 +510,9 @@
 								{/if}
 							</div>
 						</div>
-						<div class="rounded-lg border border-gray-200">
+
+						<!-- Scrollable Top-Up List Container -->
+						<div class="max-h-[300px] overflow-y-auto rounded-lg border border-gray-200">
 							{#if topups.length}
 								{#each topups as topup (topup.id)}
 									<div
