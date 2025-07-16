@@ -132,24 +132,25 @@
 		}
 	}
 
-	// async function loadTopups(selectedGoal) {
-	// 	try {
-	// 		const res = await fetch(`/api/savings-topup/${selectedGoal.id}`, {
-	// 			headers: await getAuthHeaders()
-	// 		});
+	async function loadTopups() {
+		console.log('Loading top-ups for goal:', selectedGoal);
+		try {
+			const res = await fetch(`/api/savings-topup/${selectedGoal.id}`, {
+				headers: await getAuthHeaders()
+			});
 
-	// 		if (!res.ok) {
-	// 			const err = await res.json();
-	// 			errorMessage = err.error || 'Failed to load top-ups';
-	// 			return;
-	// 		}
+			if (!res.ok) {
+				const err = await res.json();
+				errorMessage = err.error || 'Failed to load top-ups';
+				return;
+			}
 
-	// 		topups = await res.json();
-	// 	} catch (error) {
-	// 		console.error('Error loading top-ups:', error);
-	// 		errorMessage = 'Failed to load top-ups';
-	// 	}
-	// }
+			topups = await res.json();
+		} catch (error) {
+			console.error('Error loading top-ups:', error);
+			errorMessage = 'Failed to load top-ups';
+		}
+	}
 
 	async function addTopUp() {
 		errorMessage = '';
@@ -172,7 +173,6 @@
 			}
 
 			topup_amount = '';
-			// await loadTopups(selectedGoal);
 			await loadSavings();
 
 			selectedGoal = goals.find((g) => g.id === selectedGoal.id);
@@ -183,6 +183,7 @@
 	}
 	function showSaving(id) {
 		selectedGoal = goals.find((goal) => goal.id === id);
+		loadTopups(selectedGoal);
 	}
 
 	function formatDate(dateString) {
@@ -225,7 +226,6 @@
 			}
 
 			await loadSavings();
-			// await loadTopups(selectedGoal);
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
