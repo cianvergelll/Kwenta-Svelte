@@ -46,7 +46,6 @@ export async function PATCH({ request, params, locals }) {
     try {
         const partialData = await request.json();
 
-        // Validate at least one field is being updated
         const updatableFields = ['topup_amount'];
         const isValidUpdate = updatableFields.some(field => field in partialData);
 

@@ -132,36 +132,36 @@
 		}
 	}
 
-	async function loadTopups(goal) {
-		try {
-			const res = await fetch(`/api/saving-topup?goal_id=${goal.id}`, {
-				headers: await getAuthHeaders()
-			});
+	// async function loadTopups(selectedGoal) {
+	// 	try {
+	// 		const res = await fetch(`/api/savings-topup/${selectedGoal.id}`, {
+	// 			headers: await getAuthHeaders()
+	// 		});
 
-			if (!res.ok) {
-				const err = await res.json();
-				errorMessage = err.error || 'Failed to load top-ups';
-				return;
-			}
+	// 		if (!res.ok) {
+	// 			const err = await res.json();
+	// 			errorMessage = err.error || 'Failed to load top-ups';
+	// 			return;
+	// 		}
 
-			topups = await res.json();
-		} catch (error) {
-			console.error('Error loading top-ups:', error);
-			errorMessage = 'Failed to load top-ups';
-		}
-	}
+	// 		topups = await res.json();
+	// 	} catch (error) {
+	// 		console.error('Error loading top-ups:', error);
+	// 		errorMessage = 'Failed to load top-ups';
+	// 	}
+	// }
 
 	async function addTopUp() {
-		console.log('Starting addTopUp');
 		errorMessage = '';
 
+		const selectedGoalId = selectedGoal.id;
 		try {
-			const res = await fetch('/api/saving-topup', {
+			const res = await fetch('/api/savings-topup', {
 				method: 'POST',
 				headers: await getAuthHeaders(),
 				body: JSON.stringify({
-					goal_id: selectedGoal.id,
-					amount: topup_amount
+					goal_id: selectedGoalId,
+					topup_amount: topup_amount
 				})
 			});
 
@@ -172,7 +172,7 @@
 			}
 
 			topup_amount = '';
-			await loadTopups(selectedGoal);
+			// await loadTopups(selectedGoal);
 			await loadSavings();
 
 			selectedGoal = goals.find((g) => g.id === selectedGoal.id);
@@ -225,6 +225,7 @@
 			}
 
 			await loadSavings();
+			// await loadTopups(selectedGoal);
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
