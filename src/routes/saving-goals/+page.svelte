@@ -20,6 +20,7 @@
 	let selectedGoal = $state(null);
 	let topup_amount = $state('');
 	let topups = $state([]);
+	let currentTopupSortMethod = $state('date-desc'); // Default to newest first
 
 	async function getAuthHeaders() {
 		const token = localStorage.getItem('sessionToken');
@@ -45,6 +46,25 @@
 				break;
 			default:
 				unCompleted.sort((a, b) => new Date(a.goal_date) - new Date(b.goal_date));
+		}
+	}
+
+	function sortTopups() {
+		switch (currentTopupSortMethod) {
+			case 'date-asc':
+				topups.sort((a, b) => new Date(a.date) - new Date(b.date));
+				break;
+			case 'date-desc':
+				topups.sort((a, b) => new Date(b.date) - new Date(a.date));
+				break;
+			case 'amount-asc':
+				topups.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
+				break;
+			case 'amount-desc':
+				topups.sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+				break;
+			default:
+				topups.sort((a, b) => new Date(b.date) - new Date(a.date));
 		}
 	}
 
@@ -133,7 +153,8 @@
 	}
 
 	async function loadTopups() {
-		console.log('Loading top-ups for goal:', selectedGoal);
+		if (!selectedGoal) return;
+
 		try {
 			const res = await fetch(`/api/savings-topup/${selectedGoal.id}`, {
 				headers: await getAuthHeaders()
@@ -145,7 +166,14 @@
 				return;
 			}
 
-			topups = await res.json();
+			const data = await res.json();
+			topups = data.map((topup) => ({
+				...topup,
+				amount: parseFloat(topup.topup_amount), // Convert to number
+				date: topup.created_at // Use created_at as date
+			}));
+
+			sortTopups();
 		} catch (error) {
 			console.error('Error loading top-ups:', error);
 			errorMessage = 'Failed to load top-ups';
@@ -174,21 +202,35 @@
 
 			topup_amount = '';
 			await loadSavings();
+			await loadTopups(); // Reload topups after adding new one
 
+			// Update selected goal with latest data
 			selectedGoal = goals.find((g) => g.id === selectedGoal.id);
 		} catch (error) {
 			console.error('Error adding top-up:', error);
 			errorMessage = 'Failed to add top-up';
 		}
 	}
+
 	function showSaving(id) {
 		selectedGoal = goals.find((goal) => goal.id === id);
-		loadTopups(selectedGoal);
+		if (selectedGoal) {
+			loadTopups();
+		} else {
+			selectedGoal = null;
+		}
 	}
 
-	function formatDate(dateString) {
-		const options = { year: 'numeric', month: 'long', day: 'numeric' };
-		return new Date(dateString).toLocaleDateString('en-US', options);
+	function formatDate(timestamp) {
+		const date = new Date(timestamp);
+		const options = {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			hour: '2-digit',
+			minute: '2-digit'
+		};
+		return date.toLocaleDateString('en-US', options);
 	}
 
 	function formatCurrency(amount) {
@@ -201,6 +243,12 @@
 	function handleSort(method) {
 		currentSortMethod = method;
 		sortSavings();
+		sortDropdownOpen = false;
+	}
+
+	function handleTopupSort(method) {
+		currentTopupSortMethod = method;
+		sortTopups();
 		sortDropdownOpen = false;
 	}
 
@@ -434,25 +482,25 @@
 									<div class="absolute right-0 z-10 mt-1 w-40 rounded-md bg-white shadow-lg">
 										<div class="py-1">
 											<button
-												onclick={() => handleSort('date-asc')}
+												onclick={() => handleTopupSort('date-asc')}
 												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
 											>
 												Date (Oldest first)
 											</button>
 											<button
-												onclick={() => handleSort('date-desc')}
+												onclick={() => handleTopupSort('date-desc')}
 												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
 											>
 												Date (Newest first)
 											</button>
 											<button
-												onclick={() => handleSort('amount-asc')}
+												onclick={() => handleTopupSort('amount-asc')}
 												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
 											>
 												Amount (Lowest first)
 											</button>
 											<button
-												onclick={() => handleSort('amount-desc')}
+												onclick={() => handleTopupSort('amount-desc')}
 												class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
 											>
 												Amount (Highest first)
@@ -463,14 +511,14 @@
 							</div>
 						</div>
 						<div class="rounded-lg border border-gray-200">
-							{#if selectedGoal.transactions?.length}
-								{#each selectedGoal.transactions as transaction (transaction.id)}
+							{#if topups.length}
+								{#each topups as topup (topup.id)}
 									<div
 										class="flex items-center justify-between border-b border-gray-200 px-4 py-3 last:border-b-0"
 									>
 										<div>
-											<p class="font-semibold">{formatCurrency(transaction.amount)}</p>
-											<p class="text-sm text-gray-500">{formatDate(transaction.date)}</p>
+											<p class="font-semibold">{formatCurrency(topup.amount)}</p>
+											<p class="text-sm text-gray-500">{formatDate(topup.date)}</p>
 										</div>
 										<div class="flex gap-2">
 											<Button variant="ghost" className="text-blue-500 hover:bg-blue-50"

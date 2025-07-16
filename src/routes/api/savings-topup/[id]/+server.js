@@ -18,6 +18,7 @@ export async function GET({ params, locals }) {
         return new Response(JSON.stringify(rows), {
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
         console.error("GET top-ups error:", error);
         return new Response(JSON.stringify({ error: 'Failed to fetch top ups' }), {
