@@ -40,16 +40,10 @@ export async function PUT({ request, params, locals }) {
         const { topup_amount } = await request.json();
 
         const [result] = await pool.query(
-            'UPDATE savings_topups SET topup_amount = ? WHERE id = ? AND user_id = ?',
+            'UPDATE savings_topups SET topup_amount = ? WHERE goal_id = ? AND user_id = ?',
             [topup_amount, params.id, locals.user.id]
         );
 
-        if (result.affectedRows === 0) {
-            return new Response(JSON.stringify({ error: 'No top ups added' }), {
-                status: 404,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
 
         return new Response(JSON.stringify({ message: 'Savings updated' }), {
             status: 200,
@@ -72,7 +66,8 @@ export async function DELETE({ params, locals }) {
     }
 
     try {
-        await pool.query('DELETE FROM saving_goals WHERE id = ? AND user_id = ?', [params.id, locals.user.id]);
+        await pool.query('DELETE FROM savings_topup WHERE id = ? AND user_id = ?', [params.id, locals.user.id]);
+        await pool.query('UPDATE saving_goals SET current_amount = current_amount - ? WHERE id = ? AND user_id = ?', [params.topup_amount, params.goal_id, locals.user.id]);
         return new Response(JSON.stringify({ message: 'Saving goal deleted' }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
