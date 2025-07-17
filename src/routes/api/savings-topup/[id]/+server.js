@@ -41,7 +41,7 @@ export async function PUT({ request, params, locals }) {
 
         const [result] = await pool.query(
             'UPDATE savings_topups SET topup_amount = ? WHERE goal_id = ? AND user_id = ?',
-            [topup_amount, params.id, locals.user.id]
+            [params.topup_amount, params.goal_id, locals.user.id]
         );
 
 
@@ -65,18 +65,55 @@ export async function DELETE({ params, locals }) {
         });
     }
 
+    let connection;
+
     try {
-        await pool.query('DELETE FROM savings_topup WHERE id = ? AND user_id = ?', [params.id, locals.user.id]);
-        await pool.query('UPDATE saving_goals SET current_amount = current_amount - ? WHERE id = ? AND user_id = ?', [params.topup_amount, params.goal_id, locals.user.id]);
-        return new Response(JSON.stringify({ message: 'Saving goal deleted' }), {
+        connection = await pool.getConnection();
+
+        await connection.beginTransaction();
+
+        const [topupRows] = await connection.query(
+            'SELECT goal_id, topup_amount FROM savings_topup WHERE id = ? AND user_id = ?',
+            [params.id, locals.user.id]
+        );
+
+        if (topupRows.length === 0) {
+            return new Response(JSON.stringify({ error: 'Top-up not found' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        const { goal_id, topup_amount } = topupRows[0];
+
+        await connection.query(
+            'DELETE FROM savings_topup WHERE id = ? AND user_id = ?',
+            [params.id, locals.user.id]
+        );
+
+        await connection.query(
+            'UPDATE saving_goals SET current_amount = current_amount - ? WHERE id = ? AND user_id = ?',
+            [topup_amount, goal_id, locals.user.id]
+        );
+
+        await connection.commit();
+
+        return new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
-        return new Response(JSON.stringify({ error: 'Database error' }), {
+        if (connection) await connection.rollback();
+        console.error('DELETE top-up error:', error);
+
+        return new Response(JSON.stringify({
+            error: 'Failed to delete top-up'
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
+    } finally {
+        if (connection) connection.release();
     }
-
 }
