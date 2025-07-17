@@ -89,6 +89,12 @@
 			unCompleted = [...data.filter((goal) => !goal.isCompleted)];
 
 			sortSavings();
+
+			// Automatically select the first goal if none is selected and there are uncompleted goals
+			if (!selectedGoal && unCompleted.length > 0) {
+				selectedGoal = unCompleted[0];
+				await loadTopups();
+			}
 		} catch (error) {
 			console.error('Error loading savings:', error);
 			errorMessage = 'Failed to load savings';
@@ -143,6 +149,12 @@
 				const err = await res.json();
 				errorMessage = err.error || 'Failed to delete saving goal';
 				return;
+			}
+
+			// If the deleted goal was the selected one, clear the selection
+			if (selectedGoal && selectedGoal.id === id) {
+				selectedGoal = null;
+				topups = [];
 			}
 
 			await loadSavings();
@@ -303,7 +315,6 @@
 			}
 
 			await loadSavings();
-			await loadTopups();
 		} catch (error) {
 			console.error('Session verification failed:', error);
 			goto('/login');
@@ -596,6 +607,10 @@
 							{/if}
 						</div>
 					</div>
+				</div>
+			{:else if unCompleted.length === 0}
+				<div class="flex h-full items-center justify-center p-6">
+					<p class="text-gray-500">No savings goals available. Create one to get started!</p>
 				</div>
 			{:else}
 				<div class="flex h-full items-center justify-center p-6">
