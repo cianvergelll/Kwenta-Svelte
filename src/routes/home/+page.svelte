@@ -452,8 +452,8 @@
 							variant="secondary"
 							preventDefault={true}
 							className="w-[40%]"
-							action={addExpense}>Add Expense</Button
-						>
+							action={addExpense}
+						></Button>
 					</div>
 				</form>
 			</div>

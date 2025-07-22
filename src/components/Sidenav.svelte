@@ -37,7 +37,7 @@
 	<ul class="flex flex-col items-center justify-start space-y-2 p-4">
 		<li class={`${tabs} mt-3`}><a href="/home">Expenses</a></li>
 		<li class={tabs}><a href="/budget-planner">Budget Planner</a></li>
-		<li class={tabs}><a href="/bill-reminder">Bills Reminder</a></li>
+		<li class={tabs}><a href="/bill-reminder">To be Paid</a></li>
 		<li class={tabs}><a href="/history">History</a></li>
 		<li class={tabs}><a href="foo">Notifications</a></li>
 		<li class={`${tabs} mt-55`}><a href="foo">Settings</a></li>

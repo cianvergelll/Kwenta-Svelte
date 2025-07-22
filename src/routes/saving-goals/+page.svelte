@@ -151,7 +151,6 @@
 				return;
 			}
 
-			// If the deleted goal was the selected one, clear the selection
 			if (selectedGoal && selectedGoal.id === id) {
 				selectedGoal = null;
 				topups = [];
