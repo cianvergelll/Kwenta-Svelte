@@ -49,7 +49,7 @@
 			<div class="flex items-center rounded-xl bg-green-100 px-3 py-2 font-semibold">
 				<span class="w-[150px] pl-8 text-green-600">Status</span>
 				<span class="w-[200px] text-center text-green-800">Timestamp</span>
-				<span class="flex-1 text-center text-green-800">Notification Subject</span>
+				<span class="flex-1 text-center text-green-800">Subject</span>
 			</div>
 		</div>
 		<div class="mx-auto mb-2 w-[95%] space-y-3">
@@ -71,6 +71,21 @@
 						class="flex-1 truncate rounded-full border-none bg-white px-2 py-2 text-center text-sm font-semibold outline-none"
 						readonly
 					/>
+
+					<div class="flex w-1/6 justify-end">
+						<!-- Edit -->
+						<button aria-label="Edit" class="ml-2 text-gray-600 hover:text-gray-800">
+							<Icons variant="check" />
+						</button>
+						<!-- Archive -->
+						<button aria-label="Archive" class="ml-2 text-gray-600 hover:text-gray-800">
+							<Icons variant="archive" />
+						</button>
+						<!-- Delete -->
+						<button aria-label="Delete" class="ml-2 text-gray-600 hover:text-gray-800">
+							<Icons variant="delete" />
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -95,6 +110,20 @@
 						readonly
 					/>
 				</div>
+				<div class="flex w-1/6 justify-end">
+					<!-- Edit -->
+					<button aria-label="Edit" class="ml-2 text-gray-600 hover:text-gray-800">
+						<Icons variant="check" />
+					</button>
+					<!-- Archive -->
+					<button aria-label="Archive" class="ml-2 text-gray-600 hover:text-gray-800">
+						<Icons variant="archive" />
+					</button>
+					<!-- Delete -->
+					<button aria-label="Delete" class="ml-2 text-gray-600 hover:text-gray-800">
+						<Icons variant="delete" />
+					</button>
+				</div>
 			</div>
 		</div>
 
@@ -117,6 +146,20 @@
 						class="flex-1 truncate rounded-full border-none bg-white px-2 py-2 text-center text-sm font-semibold outline-none"
 						readonly
 					/>
+				</div>
+				<div class="flex w-1/6 justify-end">
+					<!-- Edit -->
+					<button aria-label="Edit" class="ml-2 text-gray-600 hover:text-gray-800">
+						<Icons variant="check" />
+					</button>
+					<!-- Archive -->
+					<button aria-label="Archive" class="ml-2 text-gray-600 hover:text-gray-800">
+						<Icons variant="archive" />
+					</button>
+					<!-- Delete -->
+					<button aria-label="Delete" class="ml-2 text-gray-600 hover:text-gray-800">
+						<Icons variant="delete" />
+					</button>
 				</div>
 			</div>
 		</div>
