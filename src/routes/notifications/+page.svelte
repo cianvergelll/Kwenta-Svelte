@@ -8,6 +8,37 @@
 	let status = 'Info';
 	let timestamp = '2023-10-01 12:00:00';
 	let NotificationSubject = 'Here is your monthly budget report and expense analysis';
+
+	async function getAuthHeaders() {
+		const token = localStorage.getItem('sessionToken');
+		return {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${token}`
+		};
+	}
+	onMount(async () => {
+		const token = localStorage.getItem('sessionToken');
+		if (!token) {
+			goto('/login');
+			return;
+		}
+
+		try {
+			const res = await fetch('/api/auth/verify', {
+				headers: { Authorization: `Bearer ${token}` }
+			});
+
+			if (!res.ok) {
+				localStorage.removeItem('sessionToken');
+				goto('/login');
+			}
+
+			// await loadBills();
+		} catch (error) {
+			console.error('Session verification failed:', error);
+			goto('/login');
+		}
+	});
 </script>
 
 <div class="flex h-screen w-screen items-center justify-start bg-gray-100">

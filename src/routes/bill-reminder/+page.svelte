@@ -1,10 +1,9 @@
 <script>
 	import SideNav from '../../components/Sidenav.svelte';
-	import BillModal from '../../components/BillModal.svelte';
+	import BillModal from '../../components/bill-reminder/BillModal.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import Button from '../../components/Button.svelte';
-	import Icons from '../../components/Icons.svelte';
 
 	let bills = $state([]);
 	let bill_title = $state('');
@@ -617,7 +616,14 @@
 										class="ml-2 text-red-600 hover:text-red-800"
 										onclick={() => deleteBill(bill.id)}
 									>
-										<Icons variant="delete" className="text-red-600" />
+										<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M6 18L18 6M6 6l12 12"
+											/>
+										</svg>
 									</button>
 								</div>
 							</div>
