@@ -325,7 +325,7 @@
 					<h2
 						class="py- mx-auto mt-5 flex w-[92%] items-center justify-center rounded-md bg-gradient-to-r from-green-500 to-green-700 py-2 text-center text-lg font-semibold tracking-wide text-white"
 					>
-						BILLS REMINDER
+						ADD BILL
 					</h2>
 
 					<form onsubmit={addBill} class="flex h-full flex-col gap-4 p-6">
