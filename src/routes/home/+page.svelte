@@ -2,8 +2,8 @@
 	import SideNav from '../../components/sideNav.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import ExpenseModal from '../../components/ExpenseModal.svelte';
-	import Chart from '../../components/Chart.svelte';
+	import ExpenseModal from '../../components/expenses/ExpenseModal.svelte';
+	import Chart from '../../components/expenses/Chart.svelte';
 	import { totalSpent } from '../../lib/stores/totalSpent';
 	import CategoryBudget from '../../components/CategoryBudget.svelte';
 	import Button from '../../components/Button.svelte';

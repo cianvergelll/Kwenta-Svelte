@@ -40,8 +40,8 @@
 		<li class={tabs}><a href="/bill-reminder">Bills Reminder</a></li>
 		<li class={tabs}><a href="/saving-goals">Saving Goals</a></li>
 		<li class={tabs}><a href="/history">History</a></li>
-		<li class={tabs}><a href="foo">Notifications</a></li>
-		<li class={`${tabs} mt-35`}><a href="foo">Settings</a></li>
+		<li class={tabs}><a href="/notifications">Notifications</a></li>
+		<li class={`${tabs} mt-55`}><a href="foo">Settings</a></li>
 		<button
 			onclick={logout}
 			class="w-[95%] rounded-lg bg-red-500 py-3 text-lg font-bold text-white transition duration-250 hover:scale-105 hover:bg-red-600"

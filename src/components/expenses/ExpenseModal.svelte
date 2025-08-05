@@ -1,5 +1,5 @@
 <script>
-	import Button from './Button.svelte';
+	import Button from '../../components/Button.svelte';
 
 	export let showModal;
 	export const editingExpenses = null;

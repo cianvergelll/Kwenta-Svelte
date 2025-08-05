@@ -1,6 +1,6 @@
 <script>
 	import SideNav from '../../components/Sidenav.svelte';
-	import BillModal from '../../components/BillModal.svelte';
+	import BillModal from '../../components/bill-reminder/BillModal.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import Button from '../../components/Button.svelte';
