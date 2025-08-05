@@ -22,7 +22,7 @@
 	let isEditMode = $state(false);
 	let sortDropdownOpen = $state(false);
 	let currentSortMethod = $state('date-desc');
-	let currentMonthExpenses = $state([]);
+	let currentExpenses = $state([]); // Renamed from currentMonthExpenses to be timeframe agnostic
 
 	function removeBudget(id) {
 		category_budgets = category_budgets.filter((item) => item.id !== id);
@@ -83,21 +83,39 @@
 	let daily_limit = $state('');
 	let daily_spent = $state(0);
 	let isOnPage = $state(false);
+	let timeframe = $state('monthly');
+	let filteredExpenses = $state([]);
 
 	$effect(() => {
 		const now = new Date();
-		const currentMonth = now.getMonth();
-		const currentYear = now.getFullYear();
+		let filteredExpenses = [];
 
-		const currentMonthTotal = expenses
-			.filter((expense) => {
+		if (timeframe === 'daily') {
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+			
+			filteredExpenses = expenses.filter((expense) => {
+				const expenseDate = new Date(expense.created_at || expense.date);
+				return expenseDate >= today;
+			});
+
+			const dailyTotal = filteredExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
+			$totalSpent = dailyTotal;
+		} else {
+			const currentMonth = now.getMonth();
+			const currentYear = now.getFullYear();
+
+			filteredExpenses = expenses.filter((expense) => {
 				const expenseDate = new Date(expense.created_at || expense.date);
 				return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-			})
-			.reduce((sum, expense) => sum + Number(expense.expense_amount), 0)
-			.toFixed(2);
+			});
 
-		$totalSpent = currentMonthTotal;
+			const monthlyTotal = filteredExpenses.reduce((sum, expense) => sum + Number(expense.expense_amount), 0).toFixed(2);
+			$totalSpent = monthlyTotal;
+		}
+
+		processAndSortExpenses(filteredExpenses);
+		processExpenseData(filteredExpenses);
 	});
 
 	let showModal = $state(false);
@@ -151,53 +169,46 @@
 		}
 	}
 
-	function processAndSortExpenses() {
-		const now = new Date();
-		const currentMonth = now.getMonth();
-		const currentYear = now.getFullYear();
-
-		currentMonthExpenses = expenses.filter((expense) => {
-			const expenseDate = new Date(expense.created_at || expense.date);
-			return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-		});
-
+	function processAndSortExpenses(expensesToProcess) {
 		switch (currentSortMethod) {
 			case 'date-desc':
-				currentMonthExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
 				);
 				break;
 			case 'date-asc':
-				currentMonthExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => new Date(a.created_at || a.date) - new Date(b.created_at || b.date)
 				);
 				break;
 			case 'amount-desc':
-				currentMonthExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => parseFloat(b.expense_amount) - parseFloat(a.expense_amount)
 				);
 				break;
 			case 'amount-asc':
-				currentMonthExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => parseFloat(a.expense_amount) - parseFloat(b.expense_amount)
 				);
 				break;
 			case 'category-asc':
-				currentMonthExpenses.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
+				expensesToProcess.sort((a, b) => a.expense_category.localeCompare(b.expense_category));
 				break;
 			case 'category-desc':
-				currentMonthExpenses.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
+				expensesToProcess.sort((a, b) => b.expense_category.localeCompare(a.expense_category));
 				break;
 			default:
-				currentMonthExpenses.sort(
+				expensesToProcess.sort(
 					(a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date)
 				);
 		}
+
+		currentExpenses = expensesToProcess;
 	}
 
 	function handleSort(method) {
 		currentSortMethod = method;
-		processAndSortExpenses();
+		processAndSortExpenses([...currentExpenses]);
 		sortDropdownOpen = false;
 	}
 
@@ -297,7 +308,7 @@
 
 			expenses = await res.json();
 			processExpenseData(expenses);
-			processAndSortExpenses();
+			timeframe = timeframe;
 		} catch (error) {
 			console.error('Error loading expenses:', error);
 			errorMessage = 'Network error';
@@ -370,28 +381,40 @@
 	let chartData = $state([]);
 
 	function processExpenseData(expenses) {
-		const categoryMap = {};
+    const categoryMap = {};
+    const now = new Date();
 
-		expenses.forEach((expense) => {
-			const category = expense.expense_category;
-			const amount = parseFloat(expense.expense_amount);
+    expenses.forEach((expense) => {
+        const expenseDate = new Date(expense.created_at || expense.date);
+        
+        // Filter based on timeframe
+        if (timeframe === 'daily') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (expenseDate < today) return;
+        } else { // monthly
+            if (expenseDate.getMonth() !== now.getMonth() || 
+                expenseDate.getFullYear() !== now.getFullYear()) {
+                return;
+            }
+        }
 
-			if (!categoryMap[category]) {
-				categoryMap[category] = 0;
-			}
-			categoryMap[category] += amount;
-		});
+        // Aggregate by category
+        const category = expense.expense_category;
+        const amount = parseFloat(expense.expense_amount);
 
-		chartLabels = Object.keys(categoryMap);
-		chartData = Object.values(categoryMap);
-	}
+        if (!isNaN(amount)) {  // Ensure amount is a valid number
+            if (!categoryMap[category]) {
+                categoryMap[category] = 0;
+            }
+            categoryMap[category] += amount;
+        }
+    });
 
-	function reloadChart() {
-		fetchExpenses().then((data) => {
-			expenses = data;
-			processExpenseData(expenses);
-		});
-	}
+    // Update chart data
+    chartLabels = Object.keys(categoryMap);
+    chartData = Object.values(categoryMap);
+}
 
 	const inputStyle =
 		'w-[90%] py-2 border border-white rounded-lg pl-4 mb-2 text-white placeholder:text-white';
@@ -408,7 +431,6 @@
 		<Card variant="primary" className="h-[40%] w-full my-auto">
 			<div class="flex h-full flex-col items-center justify-center">
 				<form
-					onsubmit={addExpense}
 					class="flex h-full w-full flex-col items-center justify-center space-y-4"
 				>
 					<label for="expense-amount" class="text-m mb-2 self-start pl-[5%] text-white"
@@ -450,9 +472,9 @@
 							ariaLabel="Add Expense"
 							type="submit"
 							variant="secondary"
-							preventDefault={true}
+							preventDefault={false}
 							className="w-[40%]"
-							action={addExpense}>Add Expense</Button
+							action={addExpense}></Button
 						>
 					</div>
 				</form>
@@ -477,15 +499,37 @@
 	</div>
 
 	<div class="mr-5 h-[95%] w-[40%] rounded-lg border border-gray-300 bg-white">
+		<div class="flex justify-center space-x-4 p-4">
+			<label class="inline-flex items-center">
+				<input
+					type="radio"
+					name="timeframe"
+					value="daily"
+					bind:group={timeframe}
+					class="mr-2"
+				/>
+				<span class="text-gray-700">Daily</span>
+			</label>
+			<label class="inline-flex items-center">
+				<input
+					type="radio"
+					name="timeframe"
+					value="monthly"
+					bind:group={timeframe}
+					class="mr-2"
+				/>
+				<span class="text-gray-700">Monthly</span>
+			</label>
+		</div>
 		<div class="h-[50%] w-full">
 			<Chart
-				title="Expense Breakdown"
-				{chartLabels}
-				{chartData}
-				dataLabel="Amount Spent"
-				chartType="bar"
-				onReload={reloadChart}
-				{expenses}
+  			title={timeframe === 'daily' ? "Today's Expenses" : "Monthly Expense Breakdown"}
+  			chartLabels={chartLabels}
+ 			chartData={chartData}
+  			dataLabel="Amount Spent"
+  			chartType="bar"
+  			expenses={expenses}
+  			timeframe={timeframe}
 			/>
 		</div>
 
@@ -563,7 +607,7 @@
 							bind:this={expensesList}
 							class="my-3 flex max-h-65 w-full flex-col items-center overflow-y-auto pr-2"
 						>
-							{#each currentMonthExpenses as expense (expense.id)}
+							{#each currentExpenses as expense (expense.id)}
 								<li
 									class={`mb-2 flex w-[95%] items-center justify-between rounded-lg p-3 shadow
                     ${
@@ -666,7 +710,7 @@
 							{/each}
 						</ul>
 						<h1 class="text-center text-xl font-bold text-green-600">
-							TOTAL MONEY SPENT THIS MONTH: ₱ {$totalSpent}
+							TOTAL MONEY SPENT {timeframe === 'daily' ? 'TODAY' : 'THIS MONTH'}: ₱ {$totalSpent}
 						</h1>
 					</div>
 				{/if}
